@@ -1,0 +1,497 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum PlanName {
+  Starter
+  Pro
+  Enterprise
+}
+
+enum CourseStatus {
+  draft
+  published
+  archived
+}
+
+enum ContentStatus {
+  draft
+  pending_review
+  published
+}
+
+enum LessonType {
+  content
+  quiz
+  homework
+}
+
+enum BlockType {
+  text
+  video
+  quiz
+  homework
+  qa_section
+}
+
+enum QuestionType {
+  multiple_choice
+  true_false
+  short_answer
+}
+
+enum HomeworkQuestionType {
+  text
+  file_upload
+}
+
+enum SchoolRole {
+  school_admin
+  instructor
+  student
+}
+
+enum JobType {
+  certificate_generation
+  course_duplicate
+  video_processing
+}
+
+enum JobStatus {
+  pending
+  processing
+  completed
+  failed
+}
+
+// ─── Plans ────────────────────────────────────────────────────────────────────
+
+model Plan {
+  id          String   @id @default(cuid())
+  name        PlanName @unique
+  maxCourses  Int
+  maxStudents Int
+  maxStorageMb Int
+  priceUsd    Decimal  @db.Decimal(10, 2)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  schools School[]
+}
+
+// ─── Schools ──────────────────────────────────────────────────────────────────
+
+// SchoolSettings is embedded as JSONB — fields: primaryColor, logoUrl,
+// customDomain, defaultLanguage, emailFrom, completionCriteria.
+model School {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  planId    String
+  plan      Plan     @relation(fields: [planId], references: [id])
+  settings  Json     @default("{}")
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberships SchoolMembership[]
+  courses     Course[]
+  enrollments Enrollment[]
+  coupons     Coupon[]
+  apiKeys     ApiKey[]
+  jobs        Job[]
+}
+
+// ─── Users ────────────────────────────────────────────────────────────────────
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  passwordHash  String
+  firstName     String
+  lastName      String
+  avatarUrl     String?
+  isSystemAdmin Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  memberships         SchoolMembership[]
+  enrollments         Enrollment[]
+  lessonProgresses    LessonProgress[]
+  qaQuestions         QAQuestion[]
+  quizAttempts        QuizAttempt[]
+  homeworkSubmissions HomeworkSubmission[]
+  certificates        Certificate[]
+  moduleAssignments   ModuleAssignment[]
+  jobs                Job[]
+}
+
+// ─── School Memberships ───────────────────────────────────────────────────────
+
+model SchoolMembership {
+  id        String     @id @default(cuid())
+  schoolId  String
+  userId    String
+  role      SchoolRole
+  school    School     @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@unique([schoolId, userId])
+  @@index([schoolId])
+}
+
+// ─── Courses ──────────────────────────────────────────────────────────────────
+
+model Course {
+  id                     String       @id @default(cuid())
+  schoolId               String
+  school                 School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  title                  String
+  slug                   String
+  description            String?
+  thumbnailUrl           String?
+  status                 CourseStatus @default(draft)
+  priceUsd               Decimal?     @db.Decimal(10, 2)
+  completionRequirements Json         @default("{}")
+  createdAt              DateTime     @default(now())
+  updatedAt              DateTime     @updatedAt
+
+  modules      Module[]
+  enrollments  Enrollment[]
+  coupons      Coupon[]
+  certificates Certificate[]
+
+  @@unique([schoolId, slug])
+  @@index([schoolId])
+}
+
+// ─── Modules ──────────────────────────────────────────────────────────────────
+
+model Module {
+  id        String        @id @default(cuid())
+  courseId  String
+  schoolId  String
+  course    Course        @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  title     String
+  position  Int
+  status    ContentStatus @default(draft)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  lessons     Lesson[]
+  assignments ModuleAssignment[]
+
+  @@index([courseId])
+  @@index([schoolId])
+}
+
+// ─── Module Assignments (instructor → module) ─────────────────────────────────
+
+model ModuleAssignment {
+  id           String   @id @default(cuid())
+  moduleId     String
+  instructorId String
+  schoolId     String
+  module       Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  instructor   User     @relation(fields: [instructorId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+
+  @@unique([moduleId, instructorId])
+  @@index([moduleId])
+  @@index([schoolId])
+}
+
+// ─── Lessons ──────────────────────────────────────────────────────────────────
+
+model Lesson {
+  id        String        @id @default(cuid())
+  moduleId  String
+  schoolId  String
+  module    Module        @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  title     String
+  position  Int
+  type      LessonType    @default(content)
+  status    ContentStatus @default(draft)
+  blocks    Json          @default("[]") // Block[]
+  videoUrl  String?
+  durationS Int? // seconds
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  quiz             Quiz?
+  homework         Homework?
+  lessonProgresses LessonProgress[]
+  qaQuestions      QAQuestion[]
+
+  @@index([moduleId])
+  @@index([schoolId])
+}
+
+// ─── Quizzes ──────────────────────────────────────────────────────────────────
+
+model Quiz {
+  id              String   @id @default(cuid())
+  lessonId        String   @unique
+  schoolId        String
+  lesson          Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  title           String
+  passingScore    Int      @default(70) // percent
+  cooldownMinutes Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  questions QuizQuestion[]
+  attempts  QuizAttempt[]
+
+  @@index([schoolId])
+}
+
+model QuizQuestion {
+  id            String       @id @default(cuid())
+  quizId        String
+  schoolId      String
+  quiz          Quiz         @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  text          String
+  type          QuestionType
+  options       Json         @default("[]") // string[] for multiple_choice
+  correctAnswer String
+  position      Int
+  points        Int          @default(1)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([quizId])
+  @@index([schoolId])
+}
+
+model QuizAttempt {
+  id          String    @id @default(cuid())
+  quizId      String
+  userId      String
+  schoolId    String
+  quiz        Quiz      @relation(fields: [quizId], references: [id])
+  user        User      @relation(fields: [userId], references: [id])
+  answers     Json      @default("{}") // questionId → answer
+  score       Int // percent
+  passed      Boolean
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([quizId])
+  @@index([userId])
+  @@index([schoolId])
+}
+
+// ─── Homework ─────────────────────────────────────────────────────────────────
+
+model Homework {
+  id          String    @id @default(cuid())
+  lessonId    String    @unique
+  schoolId    String
+  lesson      Lesson    @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  dueAt       DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  questions   HomeworkQuestion[]
+  submissions HomeworkSubmission[]
+
+  @@index([schoolId])
+}
+
+model HomeworkQuestion {
+  id         String               @id @default(cuid())
+  homeworkId String
+  schoolId   String
+  homework   Homework             @relation(fields: [homeworkId], references: [id], onDelete: Cascade)
+  text       String
+  type       HomeworkQuestionType
+  position   Int
+  required   Boolean              @default(true)
+  createdAt  DateTime             @default(now())
+  updatedAt  DateTime             @updatedAt
+
+  @@index([homeworkId])
+  @@index([schoolId])
+}
+
+model HomeworkSubmission {
+  id           String    @id @default(cuid())
+  homeworkId   String
+  userId       String
+  schoolId     String
+  homework     Homework  @relation(fields: [homeworkId], references: [id])
+  user         User      @relation(fields: [userId], references: [id])
+  answers      Json      @default("{}") // questionId → answer
+  score        Int?
+  feedback     String?
+  instructorId String?
+  feedbackAt   DateTime?
+  submittedAt  DateTime  @default(now())
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@unique([homeworkId, userId])
+  @@index([homeworkId])
+  @@index([userId])
+  @@index([schoolId])
+}
+
+// ─── Enrollments ──────────────────────────────────────────────────────────────
+
+model Enrollment {
+  id          String    @id @default(cuid())
+  courseId    String
+  userId      String
+  schoolId    String
+  course      Course    @relation(fields: [courseId], references: [id])
+  user        User      @relation(fields: [userId], references: [id])
+  school      School    @relation(fields: [schoolId], references: [id])
+  couponId    String?
+  coupon      Coupon?   @relation(fields: [couponId], references: [id])
+  pricePaid   Decimal?  @db.Decimal(10, 2)
+  enrolledAt  DateTime  @default(now())
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([courseId, userId])
+  @@index([courseId])
+  @@index([userId])
+  @@index([schoolId])
+}
+
+// ─── Lesson Progress ──────────────────────────────────────────────────────────
+
+model LessonProgress {
+  id          String    @id @default(cuid())
+  lessonId    String
+  userId      String
+  schoolId    String
+  lesson      Lesson    @relation(fields: [lessonId], references: [id])
+  user        User      @relation(fields: [userId], references: [id])
+  completed   Boolean   @default(false)
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([lessonId, userId])
+  @@index([lessonId])
+  @@index([userId])
+  @@index([schoolId])
+}
+
+// ─── Q&A ──────────────────────────────────────────────────────────────────────
+
+model QAQuestion {
+  id           String    @id @default(cuid())
+  lessonId     String
+  userId       String
+  schoolId     String
+  lesson       Lesson    @relation(fields: [lessonId], references: [id])
+  user         User      @relation(fields: [userId], references: [id])
+  body         String
+  answer       String?
+  answeredById String?
+  answeredAt   DateTime?
+  upvotes      Int       @default(0)
+  isPinned     Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([lessonId])
+  @@index([userId])
+  @@index([schoolId])
+}
+
+// ─── Certificates ─────────────────────────────────────────────────────────────
+
+model Certificate {
+  id        String   @id @default(cuid())
+  userId    String
+  courseId  String
+  schoolId  String
+  user      User     @relation(fields: [userId], references: [id])
+  course    Course   @relation(fields: [courseId], references: [id])
+  pdfUrl    String?
+  issuedAt  DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  @@unique([userId, courseId])
+  @@index([userId])
+  @@index([courseId])
+  @@index([schoolId])
+}
+
+// ─── Coupons ──────────────────────────────────────────────────────────────────
+
+model Coupon {
+  id          String    @id @default(cuid())
+  schoolId    String
+  courseId    String?
+  school      School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  course      Course?   @relation(fields: [courseId], references: [id])
+  code        String
+  discountPct Int // 0–100
+  maxUses     Int?
+  usedCount   Int       @default(0)
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  enrollments Enrollment[]
+
+  @@unique([schoolId, code])
+  @@index([schoolId])
+}
+
+// ─── API Keys ─────────────────────────────────────────────────────────────────
+
+model ApiKey {
+  id         String    @id @default(cuid())
+  schoolId   String
+  school     School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  name       String
+  keyHash    String    @unique
+  lastUsedAt DateTime?
+  expiresAt  DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([schoolId])
+}
+
+// ─── Background Jobs ──────────────────────────────────────────────────────────
+
+model Job {
+  id        String    @id @default(cuid())
+  schoolId  String
+  userId    String
+  school    School    @relation(fields: [schoolId], references: [id])
+  user      User      @relation(fields: [userId], references: [id])
+  type      JobType
+  status    JobStatus @default(pending)
+  payload   Json      @default("{}")
+  result    Json?
+  error     String?
+  startedAt DateTime?
+  doneAt    DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([schoolId])
+  @@index([userId])
+  @@index([status])
+}

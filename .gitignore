@@ -29,3 +29,5 @@ next-env.d.ts
 /out-tsc
 todo.md
 /.idea/
+
+/src/generated/prisma
