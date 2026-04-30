@@ -9,13 +9,15 @@
     "lint": "next lint",
     "lint:fix": "next lint --fix",
     "format": "prettier --write .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "worker": "ts-node --project worker/tsconfig.json worker/index.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1055.0",
     "@aws-sdk/s3-request-presigner": "^3.1055.0",
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
+    "bullmq": "^5.77.6",
     "ioredis": "^5.11.0",
     "next": "14.2.35",
     "pino": "^10.3.1",
@@ -37,6 +39,7 @@
     "postcss": "^8",
     "prettier": "^3.8.3",
     "tailwindcss": "^3",
+    "ts-node": "^10.9.2",
     "typescript": "^5"
   }
 }
