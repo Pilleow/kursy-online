@@ -1,7 +1,6 @@
 import 'server-only'
 
 import { Queue } from 'bullmq'
-import { redis } from './redis'
 
 export interface CertificateJobData {
   studentId: string
@@ -27,7 +26,12 @@ export interface EmailDigestJobData {
   date: string
 }
 
-const connection = redis
+const redisUrl = new URL(process.env.REDIS_URL ?? 'redis://localhost:6379')
+const connection = {
+  host: redisUrl.hostname,
+  port: Number(redisUrl.port) || 6379,
+  ...(redisUrl.password ? { password: redisUrl.password } : {}),
+}
 
 export const certificateQueue = new Queue<CertificateJobData>('certificate-generation', {
   connection,
