@@ -44,14 +44,17 @@ export function withAuth<TCtx extends AuthContext>(
 
       const blocked = await redis.get(`blocklist:${payload.jti}`)
       if (blocked) {
-        return NextResponse.json({ error: 'Token has been revoked' }, { status: 403 })
+        return NextResponse.json({ error: 'Token has been revoked' }, { status: 401 })
       }
 
+      // System admins operate across all schools — strip any school-scoped claims
+      // from their token so downstream handlers cannot accidentally trust them.
+      const isSystemAdmin = payload.isSystemAdmin === true
       const ctx = {
         userId: payload.sub,
-        schoolId: payload.schoolId,
-        role: payload.role,
-        isSystemAdmin: payload.isSystemAdmin,
+        schoolId: isSystemAdmin ? null : payload.schoolId,
+        role: isSystemAdmin ? null : payload.role,
+        isSystemAdmin,
       } as TCtx
 
       return handler(req, ctx)
