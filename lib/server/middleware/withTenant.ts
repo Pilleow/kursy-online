@@ -1,6 +1,6 @@
 import 'server-only'
 
-import { NextRequest, NextResponse } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/server/db'
 import type { Prisma } from '@/src/generated/prisma/client'
 import type { AuthContext, AuthedHandler } from './withAuth'

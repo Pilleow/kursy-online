@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
 import { verifyToken, signAccessToken } from '@/lib/server/jwt'
 import { withLogging } from '@/lib/server/middleware/withLogging'
 

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/server/jwt'
 import { redis } from '@/lib/server/redis'
 import { db } from '@/lib/server/db'

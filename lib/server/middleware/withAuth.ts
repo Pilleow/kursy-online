@@ -1,6 +1,6 @@
 import 'server-only'
 
-import { NextRequest, NextResponse } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { verifyToken } from '@/lib/server/jwt'
 import { redis } from '@/lib/server/redis'

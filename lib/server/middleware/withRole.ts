@@ -1,6 +1,6 @@
 import 'server-only'
 
-import { NextRequest, NextResponse } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
 import type { SchoolRole } from '@/lib/types/user'
 import type { AuthContext } from './withAuth'
 import type { TenantContext, TenantHandler } from './withTenant'
