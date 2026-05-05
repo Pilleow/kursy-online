@@ -24,6 +24,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { useAuthStore } from '@/lib/store/authStore';
+import type { SchoolRole } from '@/lib/types/user';
 
 const RegisterSchema = z.object({
   firstName: z.string().min(1, 'First name is required'),
@@ -45,6 +47,7 @@ function roleToPath(role: string | null, isSystemAdmin: boolean): string {
 export default function RegisterPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const setAuth = useAuthStore((s) => s.setAuth);
 
   const form = useForm<RegisterValues>({
     resolver: zodResolver(RegisterSchema),
@@ -89,8 +92,7 @@ export default function RegisterPage() {
         return;
       }
 
-      localStorage.setItem('accessToken', loginData.accessToken);
-      localStorage.setItem('user', JSON.stringify(loginData.user));
+      setAuth(loginData.user, loginData.accessToken, loginData.user.schoolId ?? null, loginData.user.role as SchoolRole | null);
 
       router.push(roleToPath(loginData.user.role, loginData.user.isSystemAdmin ?? false));
     } catch {

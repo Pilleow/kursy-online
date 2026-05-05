@@ -8,15 +8,7 @@ export function withLogging(handler: RouteHandler): RouteHandler {
     const requestId = crypto.randomUUID();
     const start = Date.now();
 
-    const headers = new Headers(req.headers);
-    headers.set("x-request-id", requestId);
-    const reqWithId = new NextRequest(req.url, {
-      method: req.method,
-      headers,
-      body: req.body,
-    });
-
-    const response = await handler(reqWithId);
+    const response = await handler(req);
 
     const durationMs = Date.now() - start;
     const schoolId = req.headers.get("x-school-id") ?? undefined;

@@ -24,6 +24,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { useAuthStore } from '@/lib/store/authStore';
+import type { SchoolRole } from '@/lib/types/user';
 
 const LoginSchema = z.object({
   email: z.string().email('Enter a valid email address'),
@@ -42,6 +44,7 @@ function roleToPath(role: string | null, isSystemAdmin: boolean): string {
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const setAuth = useAuthStore((s) => s.setAuth);
 
   const form = useForm<LoginValues>({
     resolver: zodResolver(LoginSchema),
@@ -63,8 +66,7 @@ export default function LoginPage() {
         return;
       }
 
-      localStorage.setItem('accessToken', data.accessToken);
-      localStorage.setItem('user', JSON.stringify(data.user));
+      setAuth(data.user, data.accessToken, data.user.schoolId ?? null, data.user.role as SchoolRole | null);
 
       router.push(roleToPath(data.user.role, data.user.isSystemAdmin ?? false));
     } catch {
