@@ -38,6 +38,8 @@ async function handler(req: NextRequest): Promise<NextResponse> {
   const membership = user.memberships[0] ?? null
   const tokenPayload = {
     sub: user.id,
+    name: `${user.firstName} ${user.lastName}`,
+    email: user.email,
     schoolId: membership?.schoolId ?? null,
     role: membership?.role ?? null,
     isSystemAdmin: user.isSystemAdmin,

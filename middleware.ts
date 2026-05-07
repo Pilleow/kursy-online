@@ -1,4 +1,4 @@
-import { getToken } from 'next-auth/jwt'
+import { jwtVerify } from 'jose'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
@@ -20,20 +20,31 @@ function isProtected(pathname: string): boolean {
   return PROTECTED_PREFIXES.some((p) => pathname.startsWith(p))
 }
 
+async function getTokenPayload(req: NextRequest) {
+  const token = req.cookies.get('refresh_token')?.value
+  if (!token) return null
+
+  try {
+    const secret = new TextEncoder().encode(
+      process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET ?? 'dev-secret-change-me',
+    )
+    const { payload } = await jwtVerify(token, secret)
+    return payload
+  } catch {
+    return null
+  }
+}
+
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
 
   if (isPublic(pathname)) return NextResponse.next()
 
-  const token = await getToken({
-    req,
-    cookieName: 'refresh_token',
-    secret: process.env.NEXTAUTH_SECRET,
-  })
+  const payload = await getTokenPayload(req)
 
   // /system/* — requires isSystemAdmin flag
   if (pathname === '/system' || pathname.startsWith('/system/')) {
-    if (!token?.isSystemAdmin) {
+    if (!payload?.isSystemAdmin) {
       const url = req.nextUrl.clone()
       url.pathname = '/login'
       return NextResponse.redirect(url)
@@ -42,7 +53,7 @@ export async function middleware(req: NextRequest) {
   }
 
   // Role-protected routes — require any valid session
-  if (isProtected(pathname) && !token) {
+  if (isProtected(pathname) && !payload) {
     const url = req.nextUrl.clone()
     url.pathname = '/login'
     url.searchParams.set('callbackUrl', pathname)
@@ -54,6 +65,6 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|gif\\.webp)$).*)',
   ],
 }
