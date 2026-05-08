@@ -5,7 +5,7 @@ import { db } from '@/lib/server/db'
 import { signAccessToken, signRefreshToken } from '@/lib/server/jwt'
 import { withLogging } from '@/lib/server/middleware/withLogging'
 
-const LoginSchema = z.object({
+const SystemLoginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1),
 })
@@ -14,35 +14,36 @@ const REFRESH_TTL_SECONDS = 30 * 24 * 60 * 60
 
 async function handler(req: NextRequest): Promise<NextResponse> {
   const body = await req.json().catch(() => null)
-  const parsed = LoginSchema.safeParse(body)
+  const parsed = SystemLoginSchema.safeParse(body)
   if (!parsed.success) {
-    return NextResponse.json({ error: 'Validation failed', details: parsed.error.flatten() }, { status: 400 })
+    return NextResponse.json(
+      { error: 'Validation failed', details: parsed.error.flatten() },
+      { status: 400 },
+    )
   }
 
   const { email, password } = parsed.data
 
-  const user = await db.user.findUnique({
-    where: { email },
-    include: { memberships: { take: 1 } },
-  })
+  const user = await db.user.findUnique({ where: { email } })
 
-  if (!user) {
-    return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
+  // Return the same error for "not found" and "not system admin" to prevent enumeration
+  if (!user || !user.isSystemAdmin) {
+    return NextResponse.json({ error: 'Access denied' }, { status: 403 })
   }
 
   const valid = await bcrypt.compare(password, user.passwordHash)
   if (!valid) {
-    return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
+    return NextResponse.json({ error: 'Access denied' }, { status: 403 })
   }
 
-  const membership = user.memberships[0] ?? null
+  // System admin tokens carry no schoolId or role — only the isSystemAdmin flag
   const tokenPayload = {
     sub: user.id,
     name: `${user.firstName} ${user.lastName}`,
     email: user.email,
-    schoolId: membership?.schoolId ?? null,
-    role: membership?.role ?? null,
-    isSystemAdmin: user.isSystemAdmin,
+    schoolId: null,
+    role: null,
+    isSystemAdmin: true as const,
   }
 
   const [accessToken, refreshToken] = await Promise.all([
@@ -57,9 +58,9 @@ async function handler(req: NextRequest): Promise<NextResponse> {
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
-      isSystemAdmin: user.isSystemAdmin,
-      schoolId: membership?.schoolId ?? null,
-      role: membership?.role ?? null,
+      isSystemAdmin: true,
+      schoolId: null,
+      role: null,
     },
   })
 

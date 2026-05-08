@@ -2,7 +2,7 @@ import { jwtVerify } from 'jose'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-const PUBLIC_EXACT = new Set(['/', '/login', '/register'])
+const PUBLIC_EXACT = new Set(['/', '/login', '/register', '/system/login'])
 
 const PUBLIC_PREFIXES = ['/courses', '/checkout', '/api/v1/auth']
 
@@ -42,11 +42,11 @@ export async function middleware(req: NextRequest) {
 
   const payload = await getTokenPayload(req)
 
-  // /system/* — requires isSystemAdmin flag
+  // /system/* — requires isSystemAdmin flag; /system/login is already public above
   if (pathname === '/system' || pathname.startsWith('/system/')) {
     if (!payload?.isSystemAdmin) {
       const url = req.nextUrl.clone()
-      url.pathname = '/login'
+      url.pathname = '/system/login'
       return NextResponse.redirect(url)
     }
     return NextResponse.next()

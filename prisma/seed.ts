@@ -6,6 +6,25 @@ const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! })
 const db = new PrismaClient({ adapter })
 
 async function main() {
+  // ── System Admin ─────────────────────────────────────────────────────────
+  // Bootstrapped from env so credentials are never hard-coded in source.
+
+  const sysEmail = process.env.SYSTEM_ADMIN_EMAIL ?? 'sysadmin@eduflow.dev'
+  const sysPassword = process.env.SYSTEM_ADMIN_PASSWORD ?? 'changeme'
+  const sysHash = await bcrypt.hash(sysPassword, 10)
+
+  await db.user.upsert({
+    where: { email: sysEmail },
+    update: {},
+    create: {
+      email: sysEmail,
+      passwordHash: sysHash,
+      firstName: 'System',
+      lastName: 'Admin',
+      isSystemAdmin: true,
+    },
+  })
+
   // ── Plans ────────────────────────────────────────────────────────────────
 
   await db.plan.upsert({
@@ -153,6 +172,7 @@ async function main() {
   console.log(`
 Seed complete.
 
+  System:     ${sysEmail}  / ${sysPassword}  (isSystemAdmin=true)
   School:     Demo School  (id: ${school.id})
   Admin:      admin@demo.school       / password123
   Instructor: instructor@demo.school  / password123
