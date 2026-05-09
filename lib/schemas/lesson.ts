@@ -7,7 +7,15 @@ export const CreateLessonSchema = z.object({
   type: LessonTypeSchema,
 })
 
-export const UpdateLessonSchema = CreateLessonSchema.partial()
+export const UpdateLessonSchema = z.object({
+  title: z.string().min(1).max(255).optional(),
+  status: z.enum(['draft', 'pending_review', 'published']).optional(),
+  moduleId: z.string().min(1).optional(),
+})
+
+export const ReorderLessonsSchema = z.object({
+  lessonIds: z.array(z.string().min(1)).min(1),
+})
 
 const TextBlockSchema = z.object({
   type: z.literal('text'),
@@ -53,5 +61,6 @@ export const BlocksSchema = z.array(BlockSchema)
 
 export type CreateLessonInput = z.infer<typeof CreateLessonSchema>
 export type UpdateLessonInput = z.infer<typeof UpdateLessonSchema>
+export type ReorderLessonsInput = z.infer<typeof ReorderLessonsSchema>
 export type BlockInput = z.infer<typeof BlockSchema>
 export type BlocksInput = z.infer<typeof BlocksSchema>
