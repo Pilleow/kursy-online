@@ -14,7 +14,9 @@ export const CreateCourseSchema = z.object({
   accessDurationDays: z.number().int().positive().optional(),
 })
 
-export const UpdateCourseSchema = CreateCourseSchema.partial()
+export const UpdateCourseSchema = CreateCourseSchema.partial().extend({
+  status: z.enum(['draft', 'published', 'archived']).optional(),
+})
 
 export const CourseSettingsSchema = z.object({
   price: z.number().min(0),

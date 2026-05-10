@@ -48,7 +48,7 @@ const patchHandler: TenantHandler = async (req, ctx) => {
     )
   }
 
-  const { title, description, price } = parsed.data
+  const { title, description, price, status } = parsed.data
 
   const course = await tx.course.update({
     where: { id },
@@ -56,6 +56,7 @@ const patchHandler: TenantHandler = async (req, ctx) => {
       ...(title !== undefined && { title }),
       ...(description !== undefined && { description }),
       ...(price !== undefined && { priceUsd: price }),
+      ...(status !== undefined && { status }),
     },
   })
 

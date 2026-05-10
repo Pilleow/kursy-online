@@ -10,10 +10,12 @@ export type CourseReviewItem = {
   instructorId: string
 }
 
+type CoursesResponse = { data: Course[]; meta: { page: number; limit: number; total: number } }
+
 // Courses
 
-export function listCourses(schoolId: string): Promise<Course[]> {
-  return apiFetch(`${BASE}/courses?schoolId=${schoolId}`)
+export function listCourses(_schoolId: string): Promise<Course[]> {
+  return apiFetch<CoursesResponse>(`${BASE}/courses`).then((r) => r.data)
 }
 
 export function getCourse(id: string): Promise<Course> {
