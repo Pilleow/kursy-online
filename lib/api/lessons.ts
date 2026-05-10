@@ -26,10 +26,10 @@ export function deleteLesson(id: string): Promise<void> {
   return apiFetch(`${BASE}/lessons/${id}`, { method: 'DELETE' })
 }
 
-export function reorderLessons(moduleId: string, ids: string[]): Promise<void> {
-  return apiFetch(`${BASE}/modules/${moduleId}/lessons/reorder`, {
+export function reorderLessons(_moduleId: string, ids: string[]): Promise<void> {
+  return apiFetch(`${BASE}/lessons/reorder`, {
     method: 'PATCH',
-    body: JSON.stringify({ ids }),
+    body: JSON.stringify({ lessonIds: ids }),
   })
 }
 

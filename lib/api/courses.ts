@@ -86,9 +86,9 @@ export function deleteModule(moduleId: string): Promise<void> {
   return apiFetch(`${BASE}/modules/${moduleId}`, { method: 'DELETE' })
 }
 
-export function reorderModules(courseId: string, ids: string[]): Promise<void> {
-  return apiFetch(`${BASE}/courses/${courseId}/modules/reorder`, {
+export function reorderModules(_courseId: string, ids: string[]): Promise<void> {
+  return apiFetch(`${BASE}/modules/reorder`, {
     method: 'PATCH',
-    body: JSON.stringify({ ids }),
+    body: JSON.stringify({ moduleIds: ids }),
   })
 }

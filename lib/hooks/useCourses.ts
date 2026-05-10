@@ -9,6 +9,8 @@ import {
   publishCourse,
   duplicateCourse,
   listModules,
+  createModule,
+  reorderModules,
   listCourseReviews,
 } from '@/lib/api/courses'
 
@@ -88,4 +90,22 @@ export function usePublishCourse() {
 
 export function useDuplicateCourse() {
   return useMutation({ mutationFn: duplicateCourse })
+}
+
+export function useCreateModule() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ courseId, title }: { courseId: string; title: string }) =>
+      createModule(courseId, { title }),
+    onSuccess: (_: unknown, { courseId }) => {
+      qc.invalidateQueries({ queryKey: ['courses', courseId, 'modules'] })
+    },
+  })
+}
+
+export function useReorderModules() {
+  return useMutation({
+    mutationFn: ({ courseId, ids }: { courseId: string; ids: string[] }) =>
+      reorderModules(courseId, ids),
+  })
 }
