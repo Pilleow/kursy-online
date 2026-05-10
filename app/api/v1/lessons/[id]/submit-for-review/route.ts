@@ -4,6 +4,7 @@ import { type NextRequest, NextResponse } from 'next/server'
 import { withLogging } from '@/lib/server/middleware/withLogging'
 import { compose } from '@/lib/server/middleware/withRole'
 import type { TenantHandler } from '@/lib/server/middleware/withTenant'
+import type { Prisma } from '@/src/generated/prisma/client'
 
 function getLessonId(req: NextRequest): string {
   const segments = req.nextUrl.pathname.split('/')
@@ -38,10 +39,29 @@ const postHandler: TenantHandler = async (req, ctx) => {
     )
   }
 
-  const updated = await tx.lesson.update({
-    where: { id },
-    data: { status: 'pending_review' },
+  const module = await tx.module.findUnique({
+    where: { id: lesson.moduleId },
+    select: { courseId: true },
   })
+  if (!module) {
+    return NextResponse.json({ error: 'Module not found' }, { status: 404 })
+  }
+
+  const [updated] = await Promise.all([
+    tx.lesson.update({
+      where: { id },
+      data: { status: 'pending_review' },
+    }),
+    tx.contentReview.create({
+      data: {
+        lessonId: id,
+        courseId: module.courseId,
+        schoolId,
+        instructorId: userId!,
+        changeSnapshot: lesson.blocks as Prisma.InputJsonValue,
+      },
+    }),
+  ])
 
   return NextResponse.json(updated)
 }

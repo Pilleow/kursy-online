@@ -71,6 +71,12 @@ enum JobStatus {
   failed
 }
 
+enum ReviewStatus {
+  pending
+  approved
+  rejected
+}
+
 // ─── Plans ────────────────────────────────────────────────────────────────────
 
 model Plan {
@@ -131,6 +137,7 @@ model User {
   certificates        Certificate[]
   moduleAssignments   ModuleAssignment[]
   jobs                Job[]
+  contentReviews      ContentReview[]
 }
 
 // ─── School Memberships ───────────────────────────────────────────────────────
@@ -165,10 +172,11 @@ model Course {
   createdAt              DateTime     @default(now())
   updatedAt              DateTime     @updatedAt
 
-  modules      Module[]
-  enrollments  Enrollment[]
-  coupons      Coupon[]
-  certificates Certificate[]
+  modules        Module[]
+  enrollments    Enrollment[]
+  coupons        Coupon[]
+  certificates   Certificate[]
+  contentReviews ContentReview[]
 
   @@unique([schoolId, slug])
   @@index([schoolId])
@@ -231,6 +239,7 @@ model Lesson {
   homework         Homework?
   lessonProgresses LessonProgress[]
   qaQuestions      QAQuestion[]
+  contentReviews   ContentReview[]
 
   @@index([moduleId])
   @@index([schoolId])
@@ -471,6 +480,29 @@ model ApiKey {
   updatedAt  DateTime  @updatedAt
 
   @@index([schoolId])
+}
+
+// ─── Content Reviews ─────────────────────────────────────────────────────────
+
+model ContentReview {
+  id             String       @id @default(cuid())
+  lessonId       String
+  courseId       String
+  schoolId       String
+  instructorId   String
+  lesson         Lesson       @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  course         Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  instructor     User         @relation(fields: [instructorId], references: [id])
+  changeSnapshot Json         // Block[] captured at submit time
+  status         ReviewStatus @default(pending)
+  reviewerComment String?
+  createdAt      DateTime     @default(now())
+  reviewedAt     DateTime?
+
+  @@index([courseId])
+  @@index([schoolId])
+  @@index([lessonId])
+  @@index([status])
 }
 
 // ─── Background Jobs ──────────────────────────────────────────────────────────
