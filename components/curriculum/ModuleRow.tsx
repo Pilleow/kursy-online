@@ -33,9 +33,11 @@ const STATUS_LABELS: Record<ContentStatus, string> = {
 type ModuleRowProps = {
   module: ModuleWithCount
   onTitleChange?: (moduleId: string, newTitle: string) => Promise<void>
+  courseId: string
+  otherModules: { id: string; title: string }[]
 }
 
-export function ModuleRow({ module, onTitleChange }: ModuleRowProps) {
+export function ModuleRow({ module, onTitleChange, courseId, otherModules }: ModuleRowProps) {
   const [expanded, setExpanded] = useState(false)
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(module.title)
@@ -154,7 +156,7 @@ export function ModuleRow({ module, onTitleChange }: ModuleRowProps) {
       {/* Expanded lessons */}
       {expanded && (
         <div className="border-t border-gray-100 px-4 dark:border-gray-800">
-          <LessonList moduleId={module.id} />
+          <LessonList moduleId={module.id} courseId={courseId} otherModules={otherModules} />
         </div>
       )}
     </div>

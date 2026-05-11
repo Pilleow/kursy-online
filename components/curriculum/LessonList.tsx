@@ -1,6 +1,8 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
+import { useQueryClient } from '@tanstack/react-query'
 import {
   DndContext,
   closestCenter,
@@ -44,12 +46,19 @@ import {
 } from '@/components/ui/select'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useLessons, useCreateLesson, useReorderLessons, useUpdateLesson } from '@/lib/hooks/useLesson'
+import { useLessons, useCreateLesson, useReorderLessons } from '@/lib/hooks/useLesson'
+import {
+  updateLesson as apiUpdateLesson,
+  deleteLesson as apiDeleteLesson,
+  createLesson as apiCreateLesson,
+} from '@/lib/api/lessons'
 import { CreateLessonSchema, type CreateLessonInput } from '@/lib/schemas/lesson'
 import { useToast } from '@/hooks/use-toast'
+import { BulkActionBar, type BulkAction } from '@/components/layout/BulkActionBar'
+import { cn } from '@/lib/utils'
 import type { Lesson, ContentStatus, LessonType } from '@/lib/types'
 
-// ─── Status badge ─────────────────────────────────────────────────────────────
+// ─── Status / type maps ────────────────────────────────────────────────────────
 
 const STATUS_COLORS: Record<ContentStatus, string> = {
   draft: 'border-transparent bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
@@ -81,16 +90,13 @@ const LESSON_TYPE_LABELS: Record<LessonType, string> = {
 
 function SortableLessonRow({
   lesson,
-  onTitleChange,
+  isSelected,
+  onRowClick,
 }: {
   lesson: Lesson
-  onTitleChange?: (lessonId: string, newTitle: string) => Promise<void>
+  isSelected: boolean
+  onRowClick: (e: React.MouseEvent) => void
 }) {
-  const [editing, setEditing] = useState(false)
-  const [draft, setDraft] = useState(lesson.title)
-  const [saving, setSaving] = useState(false)
-  const inputRef = useRef<HTMLInputElement>(null)
-
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: lesson.id,
   })
@@ -101,80 +107,32 @@ function SortableLessonRow({
     opacity: isDragging ? 0.4 : 1,
   }
 
-  const startEditing = () => {
-    setDraft(lesson.title)
-    setEditing(true)
-    setTimeout(() => inputRef.current?.select(), 0)
-  }
-
-  const cancelEditing = () => {
-    setEditing(false)
-    setDraft(lesson.title)
-  }
-
-  const commitEditing = async () => {
-    const trimmed = draft.trim()
-    if (!trimmed || trimmed === lesson.title) {
-      cancelEditing()
-      return
-    }
-    setSaving(true)
-    try {
-      await onTitleChange?.(lesson.id, trimmed)
-    } finally {
-      setSaving(false)
-      setEditing(false)
-    }
-  }
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      e.preventDefault()
-      commitEditing()
-    } else if (e.key === 'Escape') {
-      cancelEditing()
-    }
-  }
-
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className="flex items-center gap-2 rounded-md border border-gray-100 bg-white px-3 py-2 dark:border-gray-800 dark:bg-gray-900"
+      onClick={onRowClick}
+      onMouseDown={(e) => { if (e.shiftKey) e.preventDefault() }}
+      className={cn(
+        'flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 transition-colors',
+        isSelected
+          ? 'border-blue-300 bg-blue-50 dark:border-blue-700 dark:bg-blue-950/40'
+          : 'border-gray-100 bg-white hover:border-gray-200 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:hover:bg-gray-800/70',
+      )}
     >
       <button
         {...attributes}
         {...listeners}
+        onClick={(e) => e.stopPropagation()}
         className="cursor-grab touch-none text-gray-300 hover:text-gray-500 dark:text-gray-600 dark:hover:text-gray-400"
         aria-label="Drag lesson"
       >
         <GripVertical className="h-4 w-4" />
       </button>
 
-      {editing ? (
-        <input
-          ref={inputRef}
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={handleKeyDown}
-          onBlur={cancelEditing}
-          onPointerDown={(e) => e.stopPropagation()}
-          disabled={saving}
-          className="flex-1 truncate rounded border border-blue-400 bg-white px-1.5 py-0.5 text-sm text-gray-700 outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-900 dark:text-gray-300"
-          autoFocus
-        />
-      ) : (
-        <span
-          role="button"
-          tabIndex={0}
-          onClick={startEditing}
-          onKeyDown={(e) => e.key === 'Enter' && startEditing()}
-          className="flex-1 cursor-text truncate text-sm text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400"
-          title="Click to edit title"
-        >
-          {lesson.title}
-        </span>
-      )}
+      <span className="flex-1 truncate text-sm text-gray-700 dark:text-gray-300">
+        {lesson.title}
+      </span>
 
       <Badge
         variant="outline"
@@ -261,19 +219,109 @@ function AddLessonDialog({ moduleId, onClose }: { moduleId: string; onClose: () 
   )
 }
 
+// ─── Move to module dialog ─────────────────────────────────────────────────────
+
+function MoveToModuleDialog({
+  modules,
+  loading,
+  onMove,
+  onClose,
+}: {
+  modules: { id: string; title: string }[]
+  loading: boolean
+  onMove: (moduleId: string) => void
+  onClose: () => void
+}) {
+  const [targetId, setTargetId] = useState('')
+
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Move to Module</DialogTitle>
+        </DialogHeader>
+        <Select onValueChange={setTargetId} value={targetId}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select a module" />
+          </SelectTrigger>
+          <SelectContent>
+            {modules.map((m) => (
+              <SelectItem key={m.id} value={m.id}>
+                {m.title}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
+            Cancel
+          </Button>
+          <Button disabled={!targetId || loading} onClick={() => targetId && onMove(targetId)}>
+            {loading ? 'Moving…' : 'Move'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+// ─── Delete confirm dialog ─────────────────────────────────────────────────────
+
+function DeleteConfirmDialog({
+  count,
+  loading,
+  onConfirm,
+  onClose,
+}: {
+  count: number
+  loading: boolean
+  onConfirm: () => void
+  onClose: () => void
+}) {
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>
+            Delete {count} {count === 1 ? 'lesson' : 'lessons'}?
+          </DialogTitle>
+        </DialogHeader>
+        <p className="text-sm text-gray-500 dark:text-gray-400">This action cannot be undone.</p>
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
+            Cancel
+          </Button>
+          <Button variant="destructive" disabled={loading} onClick={onConfirm}>
+            {loading ? 'Deleting…' : 'Delete'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 // ─── LessonList ───────────────────────────────────────────────────────────────
 
 type LessonListProps = {
   moduleId: string
+  courseId: string
+  otherModules: { id: string; title: string }[]
 }
 
-export function LessonList({ moduleId }: LessonListProps) {
+export function LessonList({ moduleId, courseId, otherModules }: LessonListProps) {
   const { data, isLoading } = useLessons(moduleId)
   const [lessons, setLessons] = useState<Lesson[]>([])
   const [addOpen, setAddOpen] = useState(false)
+  const [selectedLessonIds, setSelectedLessonIds] = useState<string[]>([])
+  const [moveDialogOpen, setMoveDialogOpen] = useState(false)
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  const [bulkLoading, setBulkLoading] = useState(false)
+
+  const lastClickedIndex = useRef<number | null>(null)
   const { mutateAsync: reorder } = useReorderLessons()
-  const { mutateAsync: updateLesson } = useUpdateLesson()
   const { toast } = useToast()
+  const router = useRouter()
+  const qc = useQueryClient()
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
 
@@ -296,18 +344,93 @@ export function LessonList({ moduleId }: LessonListProps) {
       await reorder({ moduleId, ids: reordered.map((l) => l.id) })
     } catch {
       setLessons(prev)
-      toast({ title: 'Reorder failed', description: 'Could not save lesson order.', variant: 'destructive' })
+      toast({
+        title: 'Reorder failed',
+        description: 'Could not save lesson order.',
+        variant: 'destructive',
+      })
     }
   }
 
-  const handleLessonTitleChange = async (lessonId: string, newTitle: string) => {
-    const prev = lessons
-    setLessons((ls) => ls.map((l) => (l.id === lessonId ? { ...l, title: newTitle } : l)))
+  const handleLessonClick = useCallback(
+    (lesson: Lesson, index: number, e: React.MouseEvent) => {
+      if (e.shiftKey) {
+        e.preventDefault()
+        if (lastClickedIndex.current === null) {
+          lastClickedIndex.current = index
+          setSelectedLessonIds([lesson.id])
+        } else {
+          const start = Math.min(lastClickedIndex.current, index)
+          const end = Math.max(lastClickedIndex.current, index)
+          setSelectedLessonIds(lessons.slice(start, end + 1).map((l) => l.id))
+        }
+      } else {
+        lastClickedIndex.current = index
+        router.push(
+          `/instructor/courses/${courseId}/modules/${moduleId}/lessons/${lesson.id}`,
+        )
+      }
+    },
+    [lessons, courseId, moduleId, router],
+  )
+
+  const handleBulkAction = async (action: BulkAction, ids: string[]) => {
+    if (action === 'move') {
+      setMoveDialogOpen(true)
+      return
+    }
+
+    if (action === 'duplicate') {
+      setBulkLoading(true)
+      try {
+        const targets = lessons.filter((l) => ids.includes(l.id))
+        await Promise.all(
+          targets.map((l) =>
+            apiCreateLesson(moduleId, { title: `${l.title} (copy)`, type: l.type }),
+          ),
+        )
+        setSelectedLessonIds([])
+        qc.invalidateQueries({ queryKey: ['modules', moduleId, 'lessons'] })
+      } catch {
+        toast({ title: 'Duplicate failed', description: 'Could not duplicate lessons.', variant: 'destructive' })
+      } finally {
+        setBulkLoading(false)
+      }
+      return
+    }
+
+    if (action === 'delete') {
+      setDeleteConfirmOpen(true)
+    }
+  }
+
+  const handleMove = async (targetModuleId: string) => {
+    setBulkLoading(true)
     try {
-      await updateLesson({ id: lessonId, body: { title: newTitle } })
+      await Promise.all(
+        selectedLessonIds.map((id) => apiUpdateLesson(id, { moduleId: targetModuleId })),
+      )
+      setSelectedLessonIds([])
+      setMoveDialogOpen(false)
+      qc.invalidateQueries({ queryKey: ['modules'] })
     } catch {
-      setLessons(prev)
-      toast({ title: 'Update failed', description: 'Could not save lesson title.', variant: 'destructive' })
+      toast({ title: 'Move failed', description: 'Could not move lessons.', variant: 'destructive' })
+    } finally {
+      setBulkLoading(false)
+    }
+  }
+
+  const handleDeleteConfirm = async () => {
+    setBulkLoading(true)
+    try {
+      await Promise.all(selectedLessonIds.map((id) => apiDeleteLesson(id)))
+      setSelectedLessonIds([])
+      setDeleteConfirmOpen(false)
+      qc.invalidateQueries({ queryKey: ['modules', moduleId, 'lessons'] })
+    } catch {
+      toast({ title: 'Delete failed', description: 'Could not delete lessons.', variant: 'destructive' })
+    } finally {
+      setBulkLoading(false)
     }
   }
 
@@ -322,34 +445,62 @@ export function LessonList({ moduleId }: LessonListProps) {
   }
 
   return (
-    <div className="space-y-1.5 py-2">
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <SortableContext items={lessons.map((l) => l.id)} strategy={verticalListSortingStrategy}>
-          {lessons.map((lesson) => (
-            <SortableLessonRow
-              key={lesson.id}
-              lesson={lesson}
-              onTitleChange={handleLessonTitleChange}
-            />
-          ))}
-        </SortableContext>
-      </DndContext>
+    <>
+      <div className="space-y-1.5 py-2">
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={lessons.map((l) => l.id)} strategy={verticalListSortingStrategy}>
+            {lessons.map((lesson, index) => (
+              <SortableLessonRow
+                key={lesson.id}
+                lesson={lesson}
+                isSelected={selectedLessonIds.includes(lesson.id)}
+                onRowClick={(e) => handleLessonClick(lesson, index, e)}
+              />
+            ))}
+          </SortableContext>
+        </DndContext>
 
-      {lessons.length === 0 && (
-        <p className="py-2 text-center text-xs text-gray-400">No lessons yet.</p>
-      )}
+        {lessons.length === 0 && (
+          <p className="py-2 text-center text-xs text-gray-400">No lessons yet.</p>
+        )}
 
-      <Button
-        variant="ghost"
-        size="sm"
-        className="mt-1 h-7 gap-1.5 px-2 text-xs text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"
-        onClick={() => setAddOpen(true)}
-      >
-        <Plus className="h-3.5 w-3.5" />
-        Add Lesson
-      </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="mt-1 h-7 gap-1.5 px-2 text-xs text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"
+          onClick={() => setAddOpen(true)}
+        >
+          <Plus className="h-3.5 w-3.5" />
+          Add Lesson
+        </Button>
+      </div>
 
       {addOpen && <AddLessonDialog moduleId={moduleId} onClose={() => setAddOpen(false)} />}
-    </div>
+
+      {moveDialogOpen && (
+        <MoveToModuleDialog
+          modules={otherModules}
+          loading={bulkLoading}
+          onMove={handleMove}
+          onClose={() => setMoveDialogOpen(false)}
+        />
+      )}
+
+      {deleteConfirmOpen && (
+        <DeleteConfirmDialog
+          count={selectedLessonIds.length}
+          loading={bulkLoading}
+          onConfirm={handleDeleteConfirm}
+          onClose={() => setDeleteConfirmOpen(false)}
+        />
+      )}
+
+      <BulkActionBar
+        selectedIds={selectedLessonIds}
+        onAction={(action, ids) => handleBulkAction(action, ids)}
+        onClear={() => setSelectedLessonIds([])}
+        entityLabel="lesson"
+      />
+    </>
   )
 }

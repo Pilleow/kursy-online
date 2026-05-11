@@ -155,6 +155,39 @@ async function main() {
     },
   })
 
+  // ── Lessons ──────────────────────────────────────────────────────────────
+
+  const m1Lessons = [
+    { id: 'seed-lesson-m1-1', title: 'What is TypeScript?', type: 'content', position: 1, status: 'published' },
+    { id: 'seed-lesson-m1-2', title: 'Primitive Types', type: 'content', position: 2, status: 'published' },
+    { id: 'seed-lesson-m1-3', title: 'Interfaces vs Type Aliases', type: 'content', position: 3, status: 'draft' },
+    { id: 'seed-lesson-m1-4', title: 'Types Quiz', type: 'quiz', position: 4, status: 'draft' },
+    { id: 'seed-lesson-m1-5', title: 'Types Homework', type: 'homework', position: 5, status: 'draft' },
+  ] as const
+
+  const m2Lessons = [
+    { id: 'seed-lesson-m2-1', title: 'Introduction to Generics', type: 'content', position: 1, status: 'published' },
+    { id: 'seed-lesson-m2-2', title: 'Utility Types: Partial & Required', type: 'content', position: 2, status: 'draft' },
+    { id: 'seed-lesson-m2-3', title: 'Utility Types: Pick & Omit', type: 'content', position: 3, status: 'draft' },
+    { id: 'seed-lesson-m2-4', title: 'Generics Quiz', type: 'quiz', position: 4, status: 'draft' },
+  ] as const
+
+  for (const l of m1Lessons) {
+    await db.lesson.upsert({
+      where: { id: l.id },
+      update: {},
+      create: { ...l, moduleId: module1.id, schoolId: school.id },
+    })
+  }
+
+  for (const l of m2Lessons) {
+    await db.lesson.upsert({
+      where: { id: l.id },
+      update: {},
+      create: { ...l, moduleId: module2.id, schoolId: school.id },
+    })
+  }
+
   // ── Module assignments ───────────────────────────────────────────────────
 
   await db.moduleAssignment.upsert({
@@ -176,8 +209,8 @@ Seed complete.
   School:     Demo School  (id: ${school.id})
   Admin:      admin@demo.school       / password123
   Instructor: instructor@demo.school  / password123
-  Course:     Intro to TypeScript
-  Modules:    Types & Interfaces | Generics & Utility Types
+  Course:     Intro to TypeScript  (id: ${course.id})
+  Modules:    Types & Interfaces (${m1Lessons.length} lessons) | Generics & Utility Types (${m2Lessons.length} lessons)
   `)
 }
 

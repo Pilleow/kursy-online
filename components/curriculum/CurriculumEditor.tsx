@@ -282,6 +282,10 @@ export function CurriculumEditor({ courseId }: CurriculumEditorProps) {
               key={module.id}
               module={module}
               onTitleChange={handleModuleTitleChange}
+              courseId={courseId}
+              otherModules={modules
+                .filter((m) => m.id !== module.id)
+                .map((m) => ({ id: m.id, title: m.title }))}
             />
           ))}
         </SortableContext>

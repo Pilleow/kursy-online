@@ -5,7 +5,10 @@ const BASE = '/api/v1'
 
 export type AssignedModule = {
   assignmentId: string
-  module: Module & { course: Pick<Course, 'id' | 'title'> }
+  module: Module & {
+    course: Pick<Course, 'id' | 'title'>
+    _count?: { lessons: number }
+  }
 }
 
 export type InstructorStats = {
