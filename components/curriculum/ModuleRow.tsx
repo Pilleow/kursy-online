@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { GripVertical, ChevronDown, ChevronRight } from 'lucide-react'
@@ -32,10 +32,16 @@ const STATUS_LABELS: Record<ContentStatus, string> = {
 
 type ModuleRowProps = {
   module: ModuleWithCount
+  onTitleChange?: (moduleId: string, newTitle: string) => Promise<void>
 }
 
-export function ModuleRow({ module }: ModuleRowProps) {
+export function ModuleRow({ module, onTitleChange }: ModuleRowProps) {
   const [expanded, setExpanded] = useState(false)
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(module.title)
+  const [saving, setSaving] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
+
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: module.id,
   })
@@ -47,6 +53,42 @@ export function ModuleRow({ module }: ModuleRowProps) {
   }
 
   const lessonCount = module._count?.lessons ?? 0
+
+  const startEditing = () => {
+    setDraft(module.title)
+    setEditing(true)
+    // defer focus so the input is in the DOM
+    setTimeout(() => inputRef.current?.select(), 0)
+  }
+
+  const cancelEditing = () => {
+    setEditing(false)
+    setDraft(module.title)
+  }
+
+  const commitEditing = async () => {
+    const trimmed = draft.trim()
+    if (!trimmed || trimmed === module.title) {
+      cancelEditing()
+      return
+    }
+    setSaving(true)
+    try {
+      await onTitleChange?.(module.id, trimmed)
+    } finally {
+      setSaving(false)
+      setEditing(false)
+    }
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      commitEditing()
+    } else if (e.key === 'Escape') {
+      cancelEditing()
+    }
+  }
 
   return (
     <div
@@ -77,9 +119,30 @@ export function ModuleRow({ module }: ModuleRowProps) {
           )}
         </button>
 
-        <span className="flex-1 truncate text-sm font-medium text-gray-800 dark:text-gray-100">
-          {module.title}
-        </span>
+        {editing ? (
+          <input
+            ref={inputRef}
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={handleKeyDown}
+            onBlur={cancelEditing}
+            onPointerDown={(e) => e.stopPropagation()}
+            disabled={saving}
+            className="flex-1 truncate rounded border border-blue-400 bg-white px-1.5 py-0.5 text-sm font-medium text-gray-800 outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-900 dark:text-gray-100"
+            autoFocus
+          />
+        ) : (
+          <span
+            role="button"
+            tabIndex={0}
+            onClick={startEditing}
+            onKeyDown={(e) => e.key === 'Enter' && startEditing()}
+            className="flex-1 cursor-text truncate text-sm font-medium text-gray-800 hover:text-blue-600 dark:text-gray-100 dark:hover:text-blue-400"
+            title="Click to edit title"
+          >
+            {module.title}
+          </span>
+        )}
 
         <span className="text-xs text-gray-400 dark:text-gray-500">
           {lessonCount} {lessonCount === 1 ? 'lesson' : 'lessons'}

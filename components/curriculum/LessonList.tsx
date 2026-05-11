@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
   DndContext,
   closestCenter,
@@ -44,7 +44,7 @@ import {
 } from '@/components/ui/select'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useLessons, useCreateLesson, useReorderLessons } from '@/lib/hooks/useLesson'
+import { useLessons, useCreateLesson, useReorderLessons, useUpdateLesson } from '@/lib/hooks/useLesson'
 import { CreateLessonSchema, type CreateLessonInput } from '@/lib/schemas/lesson'
 import { useToast } from '@/hooks/use-toast'
 import type { Lesson, ContentStatus, LessonType } from '@/lib/types'
@@ -79,7 +79,18 @@ const LESSON_TYPE_LABELS: Record<LessonType, string> = {
 
 // ─── Sortable lesson row ───────────────────────────────────────────────────────
 
-function SortableLessonRow({ lesson }: { lesson: Lesson }) {
+function SortableLessonRow({
+  lesson,
+  onTitleChange,
+}: {
+  lesson: Lesson
+  onTitleChange?: (lessonId: string, newTitle: string) => Promise<void>
+}) {
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(lesson.title)
+  const [saving, setSaving] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
+
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: lesson.id,
   })
@@ -88,6 +99,41 @@ function SortableLessonRow({ lesson }: { lesson: Lesson }) {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.4 : 1,
+  }
+
+  const startEditing = () => {
+    setDraft(lesson.title)
+    setEditing(true)
+    setTimeout(() => inputRef.current?.select(), 0)
+  }
+
+  const cancelEditing = () => {
+    setEditing(false)
+    setDraft(lesson.title)
+  }
+
+  const commitEditing = async () => {
+    const trimmed = draft.trim()
+    if (!trimmed || trimmed === lesson.title) {
+      cancelEditing()
+      return
+    }
+    setSaving(true)
+    try {
+      await onTitleChange?.(lesson.id, trimmed)
+    } finally {
+      setSaving(false)
+      setEditing(false)
+    }
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      commitEditing()
+    } else if (e.key === 'Escape') {
+      cancelEditing()
+    }
   }
 
   return (
@@ -105,9 +151,30 @@ function SortableLessonRow({ lesson }: { lesson: Lesson }) {
         <GripVertical className="h-4 w-4" />
       </button>
 
-      <span className="flex-1 truncate text-sm text-gray-700 dark:text-gray-300">
-        {lesson.title}
-      </span>
+      {editing ? (
+        <input
+          ref={inputRef}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onBlur={cancelEditing}
+          onPointerDown={(e) => e.stopPropagation()}
+          disabled={saving}
+          className="flex-1 truncate rounded border border-blue-400 bg-white px-1.5 py-0.5 text-sm text-gray-700 outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-900 dark:text-gray-300"
+          autoFocus
+        />
+      ) : (
+        <span
+          role="button"
+          tabIndex={0}
+          onClick={startEditing}
+          onKeyDown={(e) => e.key === 'Enter' && startEditing()}
+          className="flex-1 cursor-text truncate text-sm text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400"
+          title="Click to edit title"
+        >
+          {lesson.title}
+        </span>
+      )}
 
       <Badge
         variant="outline"
@@ -205,6 +272,7 @@ export function LessonList({ moduleId }: LessonListProps) {
   const [lessons, setLessons] = useState<Lesson[]>([])
   const [addOpen, setAddOpen] = useState(false)
   const { mutateAsync: reorder } = useReorderLessons()
+  const { mutateAsync: updateLesson } = useUpdateLesson()
   const { toast } = useToast()
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
@@ -219,6 +287,7 @@ export function LessonList({ moduleId }: LessonListProps) {
 
     const oldIndex = lessons.findIndex((l) => l.id === active.id)
     const newIndex = lessons.findIndex((l) => l.id === over.id)
+    const prev = lessons
     const reordered = arrayMove(lessons, oldIndex, newIndex)
 
     setLessons(reordered)
@@ -226,8 +295,19 @@ export function LessonList({ moduleId }: LessonListProps) {
     try {
       await reorder({ moduleId, ids: reordered.map((l) => l.id) })
     } catch {
-      setLessons(lessons)
+      setLessons(prev)
       toast({ title: 'Reorder failed', description: 'Could not save lesson order.', variant: 'destructive' })
+    }
+  }
+
+  const handleLessonTitleChange = async (lessonId: string, newTitle: string) => {
+    const prev = lessons
+    setLessons((ls) => ls.map((l) => (l.id === lessonId ? { ...l, title: newTitle } : l)))
+    try {
+      await updateLesson({ id: lessonId, body: { title: newTitle } })
+    } catch {
+      setLessons(prev)
+      toast({ title: 'Update failed', description: 'Could not save lesson title.', variant: 'destructive' })
     }
   }
 
@@ -246,7 +326,11 @@ export function LessonList({ moduleId }: LessonListProps) {
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={lessons.map((l) => l.id)} strategy={verticalListSortingStrategy}>
           {lessons.map((lesson) => (
-            <SortableLessonRow key={lesson.id} lesson={lesson} />
+            <SortableLessonRow
+              key={lesson.id}
+              lesson={lesson}
+              onTitleChange={handleLessonTitleChange}
+            />
           ))}
         </SortableContext>
       </DndContext>

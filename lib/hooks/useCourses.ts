@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import type { Course } from '@/lib/types'
+import type { Course, Module } from '@/lib/types'
 import {
   listCourses,
   getCourse,
@@ -10,6 +10,7 @@ import {
   duplicateCourse,
   listModules,
   createModule,
+  updateModule,
   reorderModules,
   listCourseReviews,
 } from '@/lib/api/courses'
@@ -99,6 +100,16 @@ export function useCreateModule() {
       createModule(courseId, { title }),
     onSuccess: (_: unknown, { courseId }) => {
       qc.invalidateQueries({ queryKey: ['courses', courseId, 'modules'] })
+    },
+  })
+}
+
+export function useUpdateModule() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: Partial<Module> }) => updateModule(id, body),
+    onSuccess: (module: Module) => {
+      qc.invalidateQueries({ queryKey: ['courses', module.courseId, 'modules'] })
     },
   })
 }
