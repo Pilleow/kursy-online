@@ -26,12 +26,25 @@ export function deleteQuiz(id: string): Promise<void> {
   return apiFetch(`${BASE}/quizzes/${id}`, { method: 'DELETE' })
 }
 
+export type SubmitAttemptResponse = {
+  score: number
+  passed: boolean
+  attemptId: string
+  cooldownUntil?: string
+}
+
 export function submitQuizAttempt(
   quizId: string,
-  body: { answers: Record<string, string> }
-): Promise<AttemptResult> {
+  answers: Array<{ questionId: string; answer: string }>,
+): Promise<SubmitAttemptResponse> {
   return apiFetch(`${BASE}/quizzes/${quizId}/attempts`, {
     method: 'POST',
-    body: JSON.stringify(body),
+    body: JSON.stringify({ answers }),
   })
+}
+
+export type LatestAttemptResponse = QuizAttempt & { cooldownUntil?: string }
+
+export function getLatestAttempt(quizId: string): Promise<LatestAttemptResponse> {
+  return apiFetch(`${BASE}/quizzes/${quizId}/attempts/latest`)
 }

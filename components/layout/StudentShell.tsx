@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { signOut } from 'next-auth/react'
 import { LogOut, User } from 'lucide-react'
+import { useEffect } from 'react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
+import { useAuthStore } from '@/lib/store/authStore'
 import type { ReactNode } from 'react'
 
 type ShellUser = {
@@ -28,6 +30,32 @@ type StudentShellProps = {
 
 export function StudentShell({ user, breadcrumb, children }: StudentShellProps) {
   const router = useRouter()
+  const accessToken = useAuthStore((s) => s.accessToken)
+  const setAuth = useAuthStore((s) => s.setAuth)
+
+  useEffect(() => {
+    if (accessToken) return
+    // Silently exchange the httpOnly refresh_token cookie for a new access token,
+    // then fetch /me to populate the Zustand store for client-side API calls.
+    async function silentRefresh() {
+      try {
+        const refreshRes = await fetch('/api/v1/auth/refresh', { method: 'POST' })
+        if (!refreshRes.ok) return
+        const { accessToken: newToken } = await refreshRes.json()
+
+        const meRes = await fetch('/api/v1/auth/me', {
+          headers: { Authorization: `Bearer ${newToken}` },
+        })
+        if (!meRes.ok) return
+        const { user: u, membership } = await meRes.json()
+
+        setAuth(u, newToken, membership?.schoolId ?? null, membership?.role ?? null)
+      } catch {
+        // Non-critical — page will stay unauthenticated and API calls will 401
+      }
+    }
+    silentRefresh()
+  }, [accessToken, setAuth])
 
   async function handleLogout() {
     await signOut({ redirect: false })

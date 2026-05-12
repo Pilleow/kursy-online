@@ -202,6 +202,135 @@ async function main() {
     create: { moduleId: module2.id, instructorId: instructor.id, schoolId: school.id },
   })
 
+  // ── Student + enrollment ─────────────────────────────────────────────────
+
+  const student = await db.user.upsert({
+    where: { email: 'student@demo.school' },
+    update: {},
+    create: {
+      email: 'student@demo.school',
+      passwordHash,
+      firstName: 'Sara',
+      lastName: 'Student',
+    },
+  })
+
+  await db.schoolMembership.upsert({
+    where: { schoolId_userId: { schoolId: school.id, userId: student.id } },
+    update: {},
+    create: { schoolId: school.id, userId: student.id, role: 'student' },
+  })
+
+  await db.enrollment.upsert({
+    where: { courseId_userId: { courseId: course.id, userId: student.id } },
+    update: {},
+    create: { courseId: course.id, userId: student.id, schoolId: school.id },
+  })
+
+  // ── Quizzes ──────────────────────────────────────────────────────────────
+
+  const quizM1 = await db.quiz.upsert({
+    where: { id: 'seed-quiz-m1' },
+    update: {},
+    create: {
+      id: 'seed-quiz-m1',
+      lessonId: 'seed-lesson-m1-4',
+      schoolId: school.id,
+      title: 'Types & Interfaces Quiz',
+      cooldownMinutes: 30,
+    },
+  })
+
+  const quizM1Questions = [
+    {
+      id: 'seed-qq-m1-1',
+      text: 'Which keyword is used to define an interface in TypeScript?',
+      type: 'multiple_choice' as const,
+      options: ['type', 'interface', 'class', 'struct'],
+      correctAnswer: 'interface',
+      position: 1,
+    },
+    {
+      id: 'seed-qq-m1-2',
+      text: 'Can a TypeScript interface extend another interface?',
+      type: 'true_false' as const,
+      options: ['true', 'false'],
+      correctAnswer: 'true',
+      position: 2,
+    },
+    {
+      id: 'seed-qq-m1-3',
+      text: 'Which utility type makes all properties of a type optional?',
+      type: 'multiple_choice' as const,
+      options: ['Required<T>', 'Readonly<T>', 'Partial<T>', 'Pick<T, K>'],
+      correctAnswer: 'Partial<T>',
+      position: 3,
+    },
+    {
+      id: 'seed-qq-m1-4',
+      text: 'Type aliases can represent union types but interfaces cannot.',
+      type: 'true_false' as const,
+      options: ['true', 'false'],
+      correctAnswer: 'true',
+      position: 4,
+    },
+  ]
+
+  for (const q of quizM1Questions) {
+    await db.quizQuestion.upsert({
+      where: { id: q.id },
+      update: {},
+      create: { ...q, quizId: quizM1.id, schoolId: school.id },
+    })
+  }
+
+  const quizM2 = await db.quiz.upsert({
+    where: { id: 'seed-quiz-m2' },
+    update: {},
+    create: {
+      id: 'seed-quiz-m2',
+      lessonId: 'seed-lesson-m2-4',
+      schoolId: school.id,
+      title: 'Generics & Utility Types Quiz',
+      cooldownMinutes: 60,
+    },
+  })
+
+  const quizM2Questions = [
+    {
+      id: 'seed-qq-m2-1',
+      text: 'What does the generic parameter <T> represent in a function signature?',
+      type: 'multiple_choice' as const,
+      options: ['A fixed string type', 'A placeholder for any type supplied by the caller', 'A required class instance', 'An optional parameter'],
+      correctAnswer: 'A placeholder for any type supplied by the caller',
+      position: 1,
+    },
+    {
+      id: 'seed-qq-m2-2',
+      text: 'Which utility type constructs a type by picking a set of properties from another type?',
+      type: 'multiple_choice' as const,
+      options: ['Omit<T, K>', 'Pick<T, K>', 'Partial<T>', 'Exclude<T, U>'],
+      correctAnswer: 'Pick<T, K>',
+      position: 2,
+    },
+    {
+      id: 'seed-qq-m2-3',
+      text: 'Readonly<T> prevents reassignment of properties at compile time.',
+      type: 'true_false' as const,
+      options: ['true', 'false'],
+      correctAnswer: 'true',
+      position: 3,
+    },
+  ]
+
+  for (const q of quizM2Questions) {
+    await db.quizQuestion.upsert({
+      where: { id: q.id },
+      update: {},
+      create: { ...q, quizId: quizM2.id, schoolId: school.id },
+    })
+  }
+
   // ── Review queue seed data ───────────────────────────────────────────────
   // Give lesson m1-3 some published blocks then a pending review with proposed edits.
 
@@ -273,8 +402,11 @@ Seed complete.
   School:     Demo School  (id: ${school.id})
   Admin:      admin@demo.school       / password123
   Instructor: instructor@demo.school  / password123
+  Student:    student@demo.school     / password123  (enrolled in course)
   Course:     Intro to TypeScript  (id: ${course.id})
   Modules:    Types & Interfaces (${m1Lessons.length} lessons) | Generics & Utility Types (${m2Lessons.length} lessons)
+  Quizzes:    seed-quiz-m1 (${quizM1Questions.length} questions, 30 min cooldown)
+              seed-quiz-m2 (${quizM2Questions.length} questions, 60 min cooldown)
   Reviews:    2 pending reviews seeded (seed-review-1, seed-review-2)
   `)
 }
