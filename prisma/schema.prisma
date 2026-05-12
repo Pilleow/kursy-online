@@ -311,6 +311,7 @@ model Homework {
   title       String
   description String?
   dueAt       DateTime?
+  archivedAt  DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 

@@ -19,6 +19,7 @@ export type Homework = {
   title: string
   description: string | null
   dueAt: Date | null
+  archivedAt: Date | null
   createdAt: Date
   updatedAt: Date
 }

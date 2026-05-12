@@ -9,7 +9,7 @@ const getHandler: TenantHandler = async (_req, ctx) => {
   const { schoolId, tx } = ctx
 
   const [pendingHomeworkCount, unreadQACount] = await Promise.all([
-    tx.homeworkSubmission.count({ where: { schoolId, score: null } }),
+    tx.homeworkSubmission.count({ where: { schoolId, feedback: null } }),
     tx.qAQuestion.count({ where: { schoolId, answer: null } }),
   ])
 

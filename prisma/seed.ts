@@ -6,6 +6,31 @@ const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! })
 const db = new PrismaClient({ adapter })
 
 async function main() {
+  // ── Reset ────────────────────────────────────────────────────────────────
+  // Delete in dependency order (children before parents) to avoid FK violations.
+  await db.homeworkSubmission.deleteMany()
+  await db.homeworkQuestion.deleteMany()
+  await db.homework.deleteMany()
+  await db.quizAttempt.deleteMany()
+  await db.quizQuestion.deleteMany()
+  await db.quiz.deleteMany()
+  await db.contentReview.deleteMany()
+  await db.lessonProgress.deleteMany()
+  await db.lesson.deleteMany()
+  await db.moduleAssignment.deleteMany()
+  await db.module.deleteMany()
+  await db.enrollment.deleteMany()
+  await db.qAQuestion.deleteMany()
+  await db.job.deleteMany()
+  await db.coupon.deleteMany()
+  await db.apiKey.deleteMany()
+  await db.certificate.deleteMany()
+  await db.course.deleteMany()
+  await db.schoolMembership.deleteMany()
+  await db.school.deleteMany()
+  await db.user.deleteMany()
+  await db.plan.deleteMany()
+
   // ── System Admin ─────────────────────────────────────────────────────────
   // Bootstrapped from env so credentials are never hard-coded in source.
 
@@ -331,6 +356,52 @@ async function main() {
     })
   }
 
+  // ── Homework ─────────────────────────────────────────────────────────────
+
+  const homework = await db.homework.upsert({
+    where: { id: 'seed-homework-m1' },
+    update: {},
+    create: {
+      id: 'seed-homework-m1',
+      lessonId: 'seed-lesson-m1-5',
+      schoolId: school.id,
+      title: 'TypeScript Types Homework',
+      description: 'Demonstrate your understanding of TypeScript types and interfaces by answering the questions below.',
+    },
+  })
+
+  const homeworkQuestions = [
+    {
+      id: 'seed-hwq-1',
+      text: 'Explain the difference between a type alias and an interface in TypeScript. When would you choose one over the other?',
+      type: 'text' as const,
+      position: 0,
+      required: true,
+    },
+    {
+      id: 'seed-hwq-2',
+      text: 'Write a TypeScript interface for a User object with at least 3 fields. Include at least one optional field.',
+      type: 'text' as const,
+      position: 1,
+      required: true,
+    },
+    {
+      id: 'seed-hwq-3',
+      text: 'Describe a real-world scenario where union types would be useful.',
+      type: 'text' as const,
+      position: 2,
+      required: false,
+    },
+  ]
+
+  for (const q of homeworkQuestions) {
+    await db.homeworkQuestion.upsert({
+      where: { id: q.id },
+      update: {},
+      create: { ...q, homeworkId: homework.id, schoolId: school.id },
+    })
+  }
+
   // ── Review queue seed data ───────────────────────────────────────────────
   // Give lesson m1-3 some published blocks then a pending review with proposed edits.
 
@@ -407,6 +478,8 @@ Seed complete.
   Modules:    Types & Interfaces (${m1Lessons.length} lessons) | Generics & Utility Types (${m2Lessons.length} lessons)
   Quizzes:    seed-quiz-m1 (${quizM1Questions.length} questions, 30 min cooldown)
               seed-quiz-m2 (${quizM2Questions.length} questions, 60 min cooldown)
+  Homework:   seed-homework-m1 (${homeworkQuestions.length} questions)
+              Student URL: /learn/intro-to-typescript/homework/seed-homework-m1
   Reviews:    2 pending reviews seeded (seed-review-1, seed-review-2)
   `)
 }

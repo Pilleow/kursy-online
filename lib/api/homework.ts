@@ -1,50 +1,66 @@
 import type { Homework, HomeworkQuestion, HomeworkSubmission } from '@/lib/types'
+import type { User } from '@/lib/types/user'
 import { apiFetch } from './client'
 
 const BASE = '/api/v1'
 
 export type HomeworkWithQuestions = Homework & { questions: HomeworkQuestion[] }
+export type SubmissionWithUser = HomeworkSubmission & {
+  user: Pick<User, 'id' | 'firstName' | 'lastName' | 'email'>
+}
+export type HomeworkWithSubmissionCount = HomeworkWithQuestions & {
+  _count: { submissions: number }
+  lesson: { title: string; moduleId: string }
+}
 
 export function getHomework(id: string): Promise<HomeworkWithQuestions> {
-  return apiFetch(`${BASE}/homework/${id}`)
+  return apiFetch(`${BASE}/homeworks/${id}`)
 }
 
-export function createHomework(lessonId: string, body: Partial<Homework>): Promise<Homework> {
-  return apiFetch(`${BASE}/lessons/${lessonId}/homework`, {
-    method: 'POST',
-    body: JSON.stringify(body),
-  })
+export function updateHomework(
+  id: string,
+  body: Partial<Homework & { questions: Partial<HomeworkQuestion>[] }>,
+): Promise<HomeworkWithQuestions> {
+  return apiFetch(`${BASE}/homeworks/${id}`, { method: 'PATCH', body: JSON.stringify(body) })
 }
 
-export function updateHomework(id: string, body: Partial<Homework>): Promise<Homework> {
-  return apiFetch(`${BASE}/homework/${id}`, { method: 'PATCH', body: JSON.stringify(body) })
-}
-
-export function deleteHomework(id: string): Promise<void> {
-  return apiFetch(`${BASE}/homework/${id}`, { method: 'DELETE' })
-}
-
-export function listSubmissions(homeworkId: string): Promise<HomeworkSubmission[]> {
-  return apiFetch(`${BASE}/homework/${homeworkId}/submissions`)
+export function listSubmissions(
+  homeworkId: string,
+): Promise<SubmissionWithUser[] | HomeworkSubmission | null> {
+  return apiFetch(`${BASE}/homeworks/${homeworkId}/submissions`)
 }
 
 export function submitHomework(
   homeworkId: string,
-  body: { answers: Record<string, string> }
+  body: { answers: Record<string, string> },
 ): Promise<HomeworkSubmission> {
-  return apiFetch(`${BASE}/homework/${homeworkId}/submissions`, {
+  return apiFetch(`${BASE}/homeworks/${homeworkId}/submissions`, {
     method: 'POST',
     body: JSON.stringify(body),
   })
 }
 
 export function submitFeedback(
-  homeworkId: string,
   submissionId: string,
-  body: { score?: number; feedback: string }
+  body: { feedback: string },
 ): Promise<HomeworkSubmission> {
-  return apiFetch(`${BASE}/homework/${homeworkId}/submissions/${submissionId}/feedback`, {
-    method: 'PATCH',
+  return apiFetch(`${BASE}/submissions/${submissionId}/feedback`, {
+    method: 'POST',
     body: JSON.stringify(body),
+  })
+}
+
+export function listCourseHomeworks(
+  courseId: string,
+  includeArchived = false,
+): Promise<HomeworkWithSubmissionCount[]> {
+  const qs = includeArchived ? '?includeArchived=true' : ''
+  return apiFetch(`${BASE}/courses/${courseId}/homeworks${qs}`)
+}
+
+export function archiveHomework(id: string): Promise<HomeworkWithQuestions> {
+  return apiFetch(`${BASE}/homeworks/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ archive: true }),
   })
 }
