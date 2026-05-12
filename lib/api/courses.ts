@@ -1,13 +1,21 @@
-import type { Course, Module, Lesson } from '@/lib/types'
+import type { Course, Module, Lesson, Block } from '@/lib/types'
 import { apiFetch } from './client'
 
 const BASE = '/api/v1'
 
-export type CourseReviewItem = {
+export type ContentReviewWithRelations = {
+  id: string
   lessonId: string
-  lessonTitle: string
-  submittedAt: string
+  courseId: string
+  schoolId: string
   instructorId: string
+  changeSnapshot: Block[]
+  status: 'pending' | 'approved' | 'rejected'
+  reviewerComment: string | null
+  createdAt: string
+  reviewedAt: string | null
+  lesson: { id: string; title: string; blocks: Block[] }
+  instructor: { id: string; firstName: string; lastName: string; email: string }
 }
 
 type CoursesResponse = { data: Course[]; meta: { page: number; limit: number; total: number } }
@@ -44,20 +52,20 @@ export function duplicateCourse(id: string): Promise<{ jobId: string }> {
 
 // Reviews
 
-export function listCourseReviews(courseId: string): Promise<CourseReviewItem[]> {
+export function listCourseReviews(courseId: string): Promise<ContentReviewWithRelations[]> {
   return apiFetch(`${BASE}/courses/${courseId}/reviews`)
 }
 
-export function approveReview(courseId: string, lessonId: string): Promise<void> {
-  return apiFetch(`${BASE}/courses/${courseId}/reviews/${lessonId}/approve`, { method: 'POST' })
+export function approveReview(courseId: string, reviewId: string): Promise<void> {
+  return apiFetch(`${BASE}/courses/${courseId}/reviews/${reviewId}/approve`, { method: 'POST' })
 }
 
 export function rejectReview(
   courseId: string,
-  lessonId: string,
-  body: { reason: string }
+  reviewId: string,
+  body: { comment: string },
 ): Promise<void> {
-  return apiFetch(`${BASE}/courses/${courseId}/reviews/${lessonId}/reject`, {
+  return apiFetch(`${BASE}/courses/${courseId}/reviews/${reviewId}/reject`, {
     method: 'POST',
     body: JSON.stringify(body),
   })

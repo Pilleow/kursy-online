@@ -202,6 +202,70 @@ async function main() {
     create: { moduleId: module2.id, instructorId: instructor.id, schoolId: school.id },
   })
 
+  // ── Review queue seed data ───────────────────────────────────────────────
+  // Give lesson m1-3 some published blocks then a pending review with proposed edits.
+
+  const publishedBlocks = [
+    { type: 'text', id: 'blk-m1-3-1', html: '<p>TypeScript interfaces define the shape of an object.</p>' },
+    { type: 'text', id: 'blk-m1-3-2', html: '<p>Type aliases can represent any type, not just objects.</p>' },
+  ]
+
+  const proposedBlocks = [
+    { type: 'text', id: 'blk-m1-3-1', html: '<p>TypeScript interfaces define the shape of an object and support declaration merging.</p>' },
+    { type: 'text', id: 'blk-m1-3-2', html: '<p>Type aliases can represent any type — primitives, unions, intersections, and objects.</p>' },
+    { type: 'text', id: 'blk-m1-3-3', html: '<p>Rule of thumb: prefer <code>interface</code> for object shapes; use <code>type</code> for everything else.</p>' },
+    { type: 'video', id: 'blk-m1-3-4', url: 'https://example.com/videos/interfaces-vs-types.mp4', caption: 'Interfaces vs Type Aliases — overview' },
+  ]
+
+  await db.lesson.update({
+    where: { id: 'seed-lesson-m1-3' },
+    data: { blocks: publishedBlocks, status: 'pending_review' },
+  })
+
+  await db.contentReview.upsert({
+    where: { id: 'seed-review-1' },
+    update: {},
+    create: {
+      id: 'seed-review-1',
+      lessonId: 'seed-lesson-m1-3',
+      courseId: course.id,
+      schoolId: school.id,
+      instructorId: instructor.id,
+      changeSnapshot: proposedBlocks,
+      status: 'pending',
+    },
+  })
+
+  // Second pending review — new lesson content for m2-2
+  const m2Lesson2PublishedBlocks = [
+    { type: 'text', id: 'blk-m2-2-1', html: '<p>The <code>Partial</code> utility type makes all properties optional.</p>' },
+  ]
+
+  const m2Lesson2ProposedBlocks = [
+    { type: 'text', id: 'blk-m2-2-1', html: '<p>The <code>Partial&lt;T&gt;</code> utility type makes all properties of T optional.</p>' },
+    { type: 'text', id: 'blk-m2-2-2', html: '<p>The <code>Required&lt;T&gt;</code> utility type is the opposite — it makes all properties required.</p>' },
+    { type: 'text', id: 'blk-m2-2-3', html: '<p>Both are commonly used when you want to accept partial updates in functions.</p>' },
+  ]
+
+  await db.lesson.update({
+    where: { id: 'seed-lesson-m2-2' },
+    data: { blocks: m2Lesson2PublishedBlocks, status: 'pending_review' },
+  })
+
+  await db.contentReview.upsert({
+    where: { id: 'seed-review-2' },
+    update: {},
+    create: {
+      id: 'seed-review-2',
+      lessonId: 'seed-lesson-m2-2',
+      courseId: course.id,
+      schoolId: school.id,
+      instructorId: instructor.id,
+      changeSnapshot: m2Lesson2ProposedBlocks,
+      status: 'pending',
+    },
+  })
+
   console.log(`
 Seed complete.
 
@@ -211,6 +275,7 @@ Seed complete.
   Instructor: instructor@demo.school  / password123
   Course:     Intro to TypeScript  (id: ${course.id})
   Modules:    Types & Interfaces (${m1Lessons.length} lessons) | Generics & Utility Types (${m2Lessons.length} lessons)
+  Reviews:    2 pending reviews seeded (seed-review-1, seed-review-2)
   `)
 }
 

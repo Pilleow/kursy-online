@@ -23,7 +23,7 @@ const getHandler: TenantHandler = async (req, ctx) => {
   const reviews = await tx.contentReview.findMany({
     where: { courseId, schoolId, status: 'pending' },
     include: {
-      lesson: { select: { id: true, title: true } },
+      lesson: { select: { id: true, title: true, blocks: true } },
       instructor: { select: { id: true, firstName: true, lastName: true, email: true } },
     },
     orderBy: { createdAt: 'asc' },

@@ -13,6 +13,8 @@ import {
   updateModule,
   reorderModules,
   listCourseReviews,
+  approveReview,
+  rejectReview,
 } from '@/lib/api/courses'
 
 export function useCourses(schoolId: string) {
@@ -118,5 +120,28 @@ export function useReorderModules() {
   return useMutation({
     mutationFn: ({ courseId, ids }: { courseId: string; ids: string[] }) =>
       reorderModules(courseId, ids),
+  })
+}
+
+export function useApproveReview(courseId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (reviewId: string) => approveReview(courseId, reviewId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['courses', courseId, 'reviews'] })
+      qc.invalidateQueries({ queryKey: ['admin', 'pending-reviews-count'] })
+    },
+  })
+}
+
+export function useRejectReview(courseId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ reviewId, comment }: { reviewId: string; comment: string }) =>
+      rejectReview(courseId, reviewId, { comment }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['courses', courseId, 'reviews'] })
+      qc.invalidateQueries({ queryKey: ['admin', 'pending-reviews-count'] })
+    },
   })
 }
