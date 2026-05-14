@@ -169,6 +169,7 @@ model Course {
   thumbnailUrl           String?
   status                 CourseStatus @default(draft)
   priceUsd               Decimal?     @db.Decimal(10, 2)
+  accessDurationDays     Int?
   completionRequirements Json         @default("{}")
   createdAt              DateTime     @default(now())
   updatedAt              DateTime     @updatedAt
@@ -374,6 +375,7 @@ model Enrollment {
   coupon      Coupon?   @relation(fields: [couponId], references: [id])
   pricePaid   Decimal?  @db.Decimal(10, 2)
   enrolledAt  DateTime  @default(now())
+  expiresAt   DateTime?
   completedAt DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt

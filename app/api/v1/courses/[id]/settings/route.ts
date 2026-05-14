@@ -31,12 +31,13 @@ const settingsHandler: TenantHandler = async (req, ctx) => {
     )
   }
 
-  const { price, completionRequirements } = parsed.data
+  const { price, accessDurationDays, completionRequirements } = parsed.data
 
   const course = await tx.course.update({
     where: { id },
     data: {
       priceUsd: price,
+      accessDurationDays: accessDurationDays ?? null,
       completionRequirements,
     },
   })
