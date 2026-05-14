@@ -1,15 +1,19 @@
+import { InstructorQAPanel } from '@/components/qa/InstructorQAPanel'
+
 type Props = { params: Promise<{ id: string }> }
 
 export default async function InstructorQAPage({ params }: Props) {
   const { id } = await params
 
   return (
-    <div className="space-y-2">
-      <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-50">Q&amp;A</h1>
-      <p className="text-sm text-gray-500">
-        Course <code className="font-mono">{id}</code>
-      </p>
-      <p className="text-sm text-gray-400">Unanswered student questions will appear here.</p>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-50">Q&amp;A</h1>
+        <p className="mt-1 text-sm text-gray-500">
+          Browse and answer student questions across all lessons.
+        </p>
+      </div>
+      <InstructorQAPanel courseId={id} />
     </div>
   )
 }

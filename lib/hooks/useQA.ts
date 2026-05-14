@@ -23,10 +23,16 @@ export function usePostQuestion() {
 export function useAnswerQuestion() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ questionId, body }: { questionId: string; body: { answer: string } }) =>
-      answerQuestion(questionId, body),
-    onSuccess: (question) => {
-      qc.invalidateQueries({ queryKey: ['qa', question.lessonId] })
+    mutationFn: ({
+      questionId,
+      body,
+    }: {
+      questionId: string
+      lessonId: string
+      body: { text: string }
+    }) => answerQuestion(questionId, body),
+    onSuccess: (_, { lessonId }) => {
+      qc.invalidateQueries({ queryKey: ['qa', lessonId] })
     },
   })
 }
@@ -34,9 +40,10 @@ export function useAnswerQuestion() {
 export function useUpvoteQuestion() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: upvoteQuestion,
-    onSuccess: (question) => {
-      qc.invalidateQueries({ queryKey: ['qa', question.lessonId] })
+    mutationFn: ({ questionId }: { questionId: string; lessonId: string }) =>
+      upvoteQuestion(questionId),
+    onSuccess: (_, { lessonId }) => {
+      qc.invalidateQueries({ queryKey: ['qa', lessonId] })
     },
   })
 }

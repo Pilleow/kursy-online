@@ -3,11 +3,24 @@ import { apiFetch } from './client'
 
 const BASE = '/api/v1'
 
-export function listQA(lessonId: string): Promise<QAQuestion[]> {
-  return apiFetch(`${BASE}/lessons/${lessonId}/qa`)
+export type QAQuestionWithMeta = QAQuestion & {
+  hasUpvoted: boolean
+  user: { id: string; firstName: string; lastName: string }
 }
 
-export function postQuestion(lessonId: string, body: { body: string }): Promise<QAQuestion> {
+export type UpvoteResult = { upvotes: number; hasUpvoted: boolean }
+
+export function listQA(
+  lessonId: string,
+  sort: 'newest' | 'popular' = 'newest',
+): Promise<QAQuestionWithMeta[]> {
+  return apiFetch(`${BASE}/lessons/${lessonId}/qa?sort=${sort}`)
+}
+
+export function postQuestion(
+  lessonId: string,
+  body: { body: string },
+): Promise<QAQuestionWithMeta> {
   return apiFetch(`${BASE}/lessons/${lessonId}/qa`, {
     method: 'POST',
     body: JSON.stringify(body),
@@ -16,14 +29,14 @@ export function postQuestion(lessonId: string, body: { body: string }): Promise<
 
 export function answerQuestion(
   questionId: string,
-  body: { answer: string }
-): Promise<QAQuestion> {
+  body: { text: string },
+): Promise<QAQuestionWithMeta> {
   return apiFetch(`${BASE}/qa/${questionId}/answer`, {
     method: 'POST',
     body: JSON.stringify(body),
   })
 }
 
-export function upvoteQuestion(questionId: string): Promise<QAQuestion> {
+export function upvoteQuestion(questionId: string): Promise<UpvoteResult> {
   return apiFetch(`${BASE}/qa/${questionId}/upvote`, { method: 'POST' })
 }

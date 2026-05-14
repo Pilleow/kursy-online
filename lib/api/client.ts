@@ -30,6 +30,13 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({ error: res.statusText }))
+    // Stale or revoked token — clear the store and send the user back to login
+    if (res.status === 401) {
+      useAuthStore.getState().clearAuth()
+      if (typeof window !== 'undefined') {
+        window.location.href = `/login?callbackUrl=${encodeURIComponent(window.location.pathname)}`
+      }
+    }
     throw new ApiError(res.status, body)
   }
 

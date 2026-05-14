@@ -138,6 +138,7 @@ model User {
   moduleAssignments   ModuleAssignment[]
   jobs                Job[]
   contentReviews      ContentReview[]
+  upvotes             Upvote[]
 }
 
 // ─── School Memberships ───────────────────────────────────────────────────────
@@ -421,9 +422,25 @@ model QAQuestion {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
+  upvoteRecords Upvote[]
+
   @@index([lessonId])
   @@index([userId])
   @@index([schoolId])
+}
+
+// ─── Q&A Upvotes ──────────────────────────────────────────────────────────────
+
+model Upvote {
+  id         String     @id @default(cuid())
+  userId     String
+  questionId String
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  question   QAQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  createdAt  DateTime   @default(now())
+
+  @@unique([userId, questionId])
+  @@index([questionId])
 }
 
 // ─── Certificates ─────────────────────────────────────────────────────────────
