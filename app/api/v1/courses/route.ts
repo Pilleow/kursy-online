@@ -1,6 +1,6 @@
 import 'server-only'
 
-import { type NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { withLogging } from '@/lib/server/middleware/withLogging'
 import { withAuth } from '@/lib/server/middleware/withAuth'
 import { withTenant, type TenantHandler } from '@/lib/server/middleware/withTenant'

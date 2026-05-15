@@ -16,8 +16,8 @@ const patchHandler: TenantHandler = async (req, ctx) => {
   const { schoolId, tx } = ctx
   const moduleId = getModuleId(req)
 
-  const module = await tx.module.findFirst({ where: { id: moduleId, schoolId } })
-  if (!module) {
+  const found = await tx.module.findFirst({ where: { id: moduleId, schoolId } })
+  if (!found) {
     return NextResponse.json({ error: 'Module not found' }, { status: 404 })
   }
 

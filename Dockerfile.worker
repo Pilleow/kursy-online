@@ -3,4 +3,4 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
-CMD ["npx", "ts-node", "worker/index.ts"]
+CMD ["npx", "ts-node", "--project", "worker/tsconfig.json", "worker/index.ts"]

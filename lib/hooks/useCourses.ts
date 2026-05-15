@@ -20,7 +20,7 @@ import {
 export function useCourses(schoolId: string) {
   return useQuery({
     queryKey: ['courses', schoolId],
-    queryFn: () => listCourses(schoolId),
+    queryFn: () => listCourses(),
     enabled: !!schoolId,
   })
 }

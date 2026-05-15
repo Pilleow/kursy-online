@@ -55,7 +55,7 @@ const postHandler: TenantHandler = async (req, ctx) => {
   })
   const position = (max._max.position ?? 0) + 1
 
-  const module = await tx.module.create({
+  const created = await tx.module.create({
     data: {
       title: parsed.data.title,
       courseId,
@@ -64,7 +64,7 @@ const postHandler: TenantHandler = async (req, ctx) => {
     },
   })
 
-  return NextResponse.json(module, { status: 201 })
+  return NextResponse.json(created, { status: 201 })
 }
 
 export const GET = withLogging(withAuth(withTenant(getHandler)))

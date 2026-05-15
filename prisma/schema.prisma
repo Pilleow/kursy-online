@@ -64,6 +64,13 @@ enum JobType {
   video_processing
 }
 
+enum VideoUploadStatus {
+  pending
+  processing
+  ready
+  error
+}
+
 enum JobStatus {
   pending
   processing
@@ -107,12 +114,13 @@ model School {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  memberships SchoolMembership[]
-  courses     Course[]
-  enrollments Enrollment[]
-  coupons     Coupon[]
-  apiKeys     ApiKey[]
-  jobs        Job[]
+  memberships  SchoolMembership[]
+  courses      Course[]
+  enrollments  Enrollment[]
+  coupons      Coupon[]
+  apiKeys      ApiKey[]
+  jobs         Job[]
+  videoUploads VideoUpload[]
 }
 
 // ─── Users ────────────────────────────────────────────────────────────────────
@@ -523,6 +531,22 @@ model ContentReview {
   @@index([schoolId])
   @@index([lessonId])
   @@index([status])
+}
+
+// ─── Video Uploads ────────────────────────────────────────────────────────────
+
+model VideoUpload {
+  id        String            @id @default(cuid())
+  schoolId  String
+  school    School            @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  s3Key     String
+  fileName  String
+  mimeType  String
+  fileSize  Int
+  status    VideoUploadStatus @default(pending)
+  createdAt DateTime          @default(now())
+
+  @@index([schoolId])
 }
 
 // ─── Background Jobs ──────────────────────────────────────────────────────────

@@ -49,7 +49,6 @@ function blockTypeLabel(block: Block): string {
 }
 
 function buildDiff(oldBlocks: Block[], newBlocks: Block[]): DiffRow[] {
-  const oldById = new Map(oldBlocks.map((b) => [b.id, b]))
   const newById = new Map(newBlocks.map((b) => [b.id, b]))
 
   const seen = new Set<string>()

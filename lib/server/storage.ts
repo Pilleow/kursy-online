@@ -13,6 +13,10 @@ const s3 = new S3Client({
   },
 })
 
+// S3_PUBLIC_ENDPOINT is the URL browsers use to reach the object store.
+// In Docker Compose it differs from S3_ENDPOINT (internal hostname).
+// Falls back to S3_ENDPOINT when both are the same (local dev without Docker).
+const publicEndpoint = (process.env.S3_PUBLIC_ENDPOINT ?? process.env.S3_ENDPOINT ?? '').replace(/\/$/, '')
 const bucket = process.env.S3_BUCKET ?? 'eduflow'
 
 export async function getPresignedUploadUrl(
@@ -20,11 +24,16 @@ export async function getPresignedUploadUrl(
   contentType: string,
   expiresIn = 3600,
 ): Promise<string> {
-  return getSignedUrl(
+  const internalUrl = await getSignedUrl(
     s3,
     new PutObjectCommand({ Bucket: bucket, Key: key, ContentType: contentType }),
     { expiresIn },
   )
+  // Rewrite the host portion so the URL is browser-reachable.
+  if (publicEndpoint && process.env.S3_ENDPOINT && publicEndpoint !== process.env.S3_ENDPOINT.replace(/\/$/, '')) {
+    return internalUrl.replace(process.env.S3_ENDPOINT.replace(/\/$/, ''), publicEndpoint)
+  }
+  return internalUrl
 }
 
 export async function getPresignedDownloadUrl(

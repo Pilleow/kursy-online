@@ -192,7 +192,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
 
         <div className="max-h-80 overflow-y-auto py-1">
           {filtered.length === 0 ? (
-            <p className="px-4 py-6 text-center text-sm text-gray-400">No results for "{query}"</p>
+            <p className="px-4 py-6 text-center text-sm text-gray-400">No results for &quot;{query}&quot;</p>
           ) : (
             filtered.map((action, i) => {
               const Icon = action.icon

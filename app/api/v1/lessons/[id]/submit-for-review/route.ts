@@ -39,11 +39,11 @@ const postHandler: TenantHandler = async (req, ctx) => {
     )
   }
 
-  const module = await tx.module.findUnique({
+  const parentModule = await tx.module.findUnique({
     where: { id: lesson.moduleId },
     select: { courseId: true },
   })
-  if (!module) {
+  if (!parentModule) {
     return NextResponse.json({ error: 'Module not found' }, { status: 404 })
   }
 
@@ -55,7 +55,7 @@ const postHandler: TenantHandler = async (req, ctx) => {
     tx.contentReview.create({
       data: {
         lessonId: id,
-        courseId: module.courseId,
+        courseId: parentModule.courseId,
         schoolId,
         instructorId: userId!,
         changeSnapshot: lesson.blocks as Prisma.InputJsonValue,

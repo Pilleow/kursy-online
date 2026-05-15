@@ -2,9 +2,8 @@ import 'server-only'
 
 import { NextResponse } from 'next/server'
 import { withLogging } from '@/lib/server/middleware/withLogging'
-import { withAuth } from '@/lib/server/middleware/withAuth'
-import { withTenant, type TenantHandler } from '@/lib/server/middleware/withTenant'
 import { compose } from '@/lib/server/middleware/withRole'
+import type { TenantHandler } from '@/lib/server/middleware/withTenant'
 
 const getHandler: TenantHandler = async (_req, ctx) => {
   const { schoolId, tx, userId } = ctx
@@ -30,4 +29,4 @@ const getHandler: TenantHandler = async (_req, ctx) => {
   )
 }
 
-export const GET = withLogging(compose('instructor')(withTenant(getHandler)))
+export const GET = withLogging(compose('instructor')(getHandler))

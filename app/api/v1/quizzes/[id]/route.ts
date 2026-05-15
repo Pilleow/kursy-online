@@ -48,7 +48,8 @@ const getHandler: TenantHandler = async (req, ctx) => {
   const questions = quiz.questions.map((q) => {
     if (isPrivileged) return q
     // Strip correctAnswer so students cannot see it
-    const { correctAnswer: _omit, ...safe } = q
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { correctAnswer: _correctAnswer, ...safe } = q
     return safe
   })
 

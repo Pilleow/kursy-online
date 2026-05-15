@@ -22,7 +22,7 @@ type CoursesResponse = { data: Course[]; meta: { page: number; limit: number; to
 
 // Courses
 
-export function listCourses(_schoolId: string): Promise<Course[]> {
+export function listCourses(): Promise<Course[]> {
   return apiFetch<CoursesResponse>(`${BASE}/courses`).then((r) => r.data)
 }
 

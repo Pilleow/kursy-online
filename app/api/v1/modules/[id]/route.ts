@@ -16,8 +16,8 @@ const patchHandler: TenantHandler = async (req, ctx) => {
   const { schoolId, tx, role, userId } = ctx
   const id = getModuleId(req)
 
-  const module = await tx.module.findFirst({ where: { id, schoolId } })
-  if (!module) {
+  const found = await tx.module.findFirst({ where: { id, schoolId } })
+  if (!found) {
     return NextResponse.json({ error: 'Module not found' }, { status: 404 })
   }
 
@@ -59,8 +59,8 @@ const deleteHandler: TenantHandler = async (req, ctx) => {
   const { schoolId, tx } = ctx
   const id = getModuleId(req)
 
-  const module = await tx.module.findFirst({ where: { id, schoolId } })
-  if (!module) {
+  const found = await tx.module.findFirst({ where: { id, schoolId } })
+  if (!found) {
     return NextResponse.json({ error: 'Module not found' }, { status: 404 })
   }
 

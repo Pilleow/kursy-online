@@ -17,8 +17,8 @@ const getHandler: TenantHandler = async (req, ctx) => {
   const { schoolId, tx } = ctx
   const moduleId = getModuleId(req)
 
-  const module = await tx.module.findFirst({ where: { id: moduleId, schoolId } })
-  if (!module) {
+  const found = await tx.module.findFirst({ where: { id: moduleId, schoolId } })
+  if (!found) {
     return NextResponse.json({ error: 'Module not found' }, { status: 404 })
   }
 
@@ -34,8 +34,8 @@ const postHandler: TenantHandler = async (req, ctx) => {
   const { schoolId, tx, role, userId } = ctx
   const moduleId = getModuleId(req)
 
-  const module = await tx.module.findFirst({ where: { id: moduleId, schoolId } })
-  if (!module) {
+  const parentModule = await tx.module.findFirst({ where: { id: moduleId, schoolId } })
+  if (!parentModule) {
     return NextResponse.json({ error: 'Module not found' }, { status: 404 })
   }
 
