@@ -89,6 +89,21 @@ export function StudentShell({ user, breadcrumb, children }: StudentShellProps) 
             )}
           </div>
 
+          <nav className="flex items-center gap-1">
+            <Link
+              href="/"
+              className="text-sm font-medium px-3 py-1.5 rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+            >
+              Courses
+            </Link>
+            <Link
+              href="/dashboard"
+              className="text-sm font-medium px-3 py-1.5 rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+            >
+              Dashboard
+            </Link>
+          </nav>
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button

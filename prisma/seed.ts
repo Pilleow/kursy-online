@@ -106,10 +106,10 @@ async function main() {
   const passwordHash = await bcrypt.hash('password123', 10)
 
   const admin = await db.user.upsert({
-    where: { email: 'admin@demo.school' },
+    where: { email: 'a@e.com' },
     update: {},
     create: {
-      email: 'admin@demo.school',
+      email: 'a@e.com',
       passwordHash,
       firstName: 'Anna',
       lastName: 'Admin',
@@ -117,10 +117,10 @@ async function main() {
   })
 
   const instructor = await db.user.upsert({
-    where: { email: 'instructor@demo.school' },
+    where: { email: 'i@e.com' },
     update: {},
     create: {
-      email: 'instructor@demo.school',
+      email: 'i@e.com',
       passwordHash,
       firstName: 'Ivan',
       lastName: 'Instructor',
@@ -228,30 +228,35 @@ async function main() {
     create: { moduleId: module2.id, instructorId: instructor.id, schoolId: school.id },
   })
 
-  // ── Student + enrollment ─────────────────────────────────────────────────
+  // ── Students + enrollments ───────────────────────────────────────────────
 
-  const student = await db.user.upsert({
-    where: { email: 'student@demo.school' },
-    update: {},
-    create: {
-      email: 'student@demo.school',
-      passwordHash,
-      firstName: 'Sara',
-      lastName: 'Student',
-    },
-  })
+  const studentSeeds = [
+    { email: 's1@e.com', firstName: 'Sara', lastName: 'Student', enroll: false },
+    { email: 's2@e.com', firstName: 'Sam', lastName: 'Student', enroll: false },
+    { email: 's3@e.com', firstName: 'Sofia', lastName: 'Student', enroll: true },
+  ]
 
-  await db.schoolMembership.upsert({
-    where: { schoolId_userId: { schoolId: school.id, userId: student.id } },
-    update: {},
-    create: { schoolId: school.id, userId: student.id, role: 'student' },
-  })
+  for (const s of studentSeeds) {
+    const student = await db.user.upsert({
+      where: { email: s.email },
+      update: {},
+      create: { email: s.email, passwordHash, firstName: s.firstName, lastName: s.lastName },
+    })
 
-  await db.enrollment.upsert({
-    where: { courseId_userId: { courseId: course.id, userId: student.id } },
-    update: {},
-    create: { courseId: course.id, userId: student.id, schoolId: school.id },
-  })
+    await db.schoolMembership.upsert({
+      where: { schoolId_userId: { schoolId: school.id, userId: student.id } },
+      update: {},
+      create: { schoolId: school.id, userId: student.id, role: 'student' },
+    })
+
+    if (s.enroll) {
+      await db.enrollment.upsert({
+        where: { courseId_userId: { courseId: course.id, userId: student.id } },
+        update: {},
+        create: { courseId: course.id, userId: student.id, schoolId: school.id },
+      })
+    }
+  }
 
   // ── Quizzes ──────────────────────────────────────────────────────────────
 
@@ -472,9 +477,10 @@ Seed complete.
 
   System:     ${sysEmail}  / ${sysPassword}  (isSystemAdmin=true)
   School:     Demo School  (id: ${school.id})
-  Admin:      admin@demo.school       / password123
-  Instructor: instructor@demo.school  / password123
-  Student:    student@demo.school     / password123  (enrolled in course)
+  Admin:      a@e.com  / password123
+  Instructor: i@e.com  / password123
+  Students:   s1@e.com, s2@e.com  / password123  (members, not enrolled)
+              s3@e.com            / password123  (enrolled)
   Course:     Intro to TypeScript  (id: ${course.id})
   Modules:    Types & Interfaces (${m1Lessons.length} lessons) | Generics & Utility Types (${m2Lessons.length} lessons)
   Quizzes:    seed-quiz-m1 (${quizM1Questions.length} questions, 30 min cooldown)

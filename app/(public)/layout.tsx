@@ -1,7 +1,11 @@
 import Link from 'next/link'
 import type { ReactNode } from 'react'
+import { auth } from '@/lib/server/auth'
 
-export default function PublicLayout({ children }: { children: ReactNode }) {
+export default async function PublicLayout({ children }: { children: ReactNode }) {
+  const session = await auth()
+  const loggedIn = !!session?.user
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-background/95 backdrop-blur sticky top-0 z-50">
@@ -9,12 +13,28 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
           <Link href="/" className="text-xl font-bold tracking-tight text-foreground">
             EduFlow
           </Link>
-          <Link
-            href="/login"
-            className="text-sm font-medium px-4 py-2 rounded-md border border-border hover:bg-accent transition-colors"
-          >
-            Login
-          </Link>
+          <nav className="flex items-center gap-2">
+            <Link
+              href="/"
+              className="text-sm font-medium px-3 py-2 rounded-md hover:bg-accent transition-colors"
+            >
+              Courses
+            </Link>
+            <Link
+              href="/dashboard"
+              className="text-sm font-medium px-3 py-2 rounded-md hover:bg-accent transition-colors"
+            >
+              Dashboard
+            </Link>
+            {!loggedIn && (
+              <Link
+                href="/login"
+                className="text-sm font-medium px-4 py-2 rounded-md border border-border hover:bg-accent transition-colors"
+              >
+                Login
+              </Link>
+            )}
+          </nav>
         </div>
       </header>
       <main>{children}</main>
