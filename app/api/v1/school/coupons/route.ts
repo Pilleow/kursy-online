@@ -2,12 +2,43 @@ import 'server-only'
 
 import { NextResponse } from 'next/server'
 import { withLogging } from '@/lib/server/middleware/withLogging'
+import { withAuth } from '@/lib/server/middleware/withAuth'
+import { withTenant, type TenantHandler } from '@/lib/server/middleware/withTenant'
 import { compose } from '@/lib/server/middleware/withRole'
-import type { TenantHandler } from '@/lib/server/middleware/withTenant'
 import { CouponSchema } from '@/lib/schemas/school'
 
-const getHandler: TenantHandler = async (_req, ctx) => {
-  const { schoolId, tx } = ctx
+const getHandler: TenantHandler = async (req, ctx) => {
+  const { schoolId, tx, role, isSystemAdmin } = ctx
+  const code = req.nextUrl.searchParams.get('code')
+
+  if (code) {
+    // Coupon validation for any authenticated user (used by the checkout flow).
+    // Returns only the discount info — never the full coupon list.
+    const now = new Date()
+    const coupon = await tx.coupon.findFirst({
+      where: {
+        schoolId,
+        code,
+        OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
+      },
+      select: { code: true, discountPct: true, courseId: true, maxUses: true, usedCount: true },
+    })
+
+    if (!coupon || (coupon.maxUses !== null && coupon.usedCount >= coupon.maxUses)) {
+      return NextResponse.json({ error: 'Invalid or expired coupon' }, { status: 404 })
+    }
+
+    return NextResponse.json({
+      code: coupon.code,
+      discountPct: coupon.discountPct,
+      courseId: coupon.courseId,
+    })
+  }
+
+  // Full coupon list — school_admin only
+  if (!isSystemAdmin && role !== 'school_admin') {
+    return NextResponse.json({ error: "Requires role 'school_admin' or higher" }, { status: 403 })
+  }
 
   const coupons = await tx.coupon.findMany({
     where: { schoolId },
@@ -65,5 +96,5 @@ const postHandler: TenantHandler = async (req, ctx) => {
   return NextResponse.json(coupon, { status: 201 })
 }
 
-export const GET = withLogging(compose('school_admin')(getHandler))
+export const GET = withLogging(withAuth(withTenant(getHandler)))
 export const POST = withLogging(compose('school_admin')(postHandler))

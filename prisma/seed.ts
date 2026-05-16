@@ -408,6 +408,98 @@ async function main() {
     })
   }
 
+  // ── Paid course ──────────────────────────────────────────────────────────
+
+  const paidCourse = await db.course.upsert({
+    where: { schoolId_slug: { schoolId: school.id, slug: 'advanced-react-patterns' } },
+    update: {},
+    create: {
+      schoolId: school.id,
+      title: 'Advanced React Patterns',
+      slug: 'advanced-react-patterns',
+      description: 'Master compound components, render props, custom hooks, and performance optimisation in React.',
+      status: 'published',
+      priceUsd: 79,
+    },
+  })
+
+  const paidModule1 = await db.module.upsert({
+    where: { id: 'seed-paid-module-1' },
+    update: {},
+    create: {
+      id: 'seed-paid-module-1',
+      courseId: paidCourse.id,
+      schoolId: school.id,
+      title: 'Compound Components',
+      position: 1,
+      status: 'published',
+    },
+  })
+
+  const paidModule2 = await db.module.upsert({
+    where: { id: 'seed-paid-module-2' },
+    update: {},
+    create: {
+      id: 'seed-paid-module-2',
+      courseId: paidCourse.id,
+      schoolId: school.id,
+      title: 'Performance & Memoization',
+      position: 2,
+      status: 'published',
+    },
+  })
+
+  const paidLessons = [
+    { id: 'seed-paid-lesson-1-1', moduleId: paidModule1.id, title: 'What are Compound Components?', type: 'content', position: 1, status: 'published' },
+    { id: 'seed-paid-lesson-1-2', moduleId: paidModule1.id, title: 'Context + Compound Pattern', type: 'content', position: 2, status: 'published' },
+    { id: 'seed-paid-lesson-1-3', moduleId: paidModule1.id, title: 'Compound Components Quiz', type: 'quiz', position: 3, status: 'published' },
+    { id: 'seed-paid-lesson-2-1', moduleId: paidModule2.id, title: 'useMemo & useCallback', type: 'content', position: 1, status: 'published' },
+    { id: 'seed-paid-lesson-2-2', moduleId: paidModule2.id, title: 'React.memo deep dive', type: 'content', position: 2, status: 'published' },
+  ] as const
+
+  for (const l of paidLessons) {
+    await db.lesson.upsert({
+      where: { id: l.id },
+      update: {},
+      create: { id: l.id, moduleId: l.moduleId, schoolId: school.id, title: l.title, type: l.type, position: l.position, status: l.status },
+    })
+  }
+
+  await db.moduleAssignment.upsert({
+    where: { moduleId_instructorId: { moduleId: paidModule1.id, instructorId: instructor.id } },
+    update: {},
+    create: { moduleId: paidModule1.id, instructorId: instructor.id, schoolId: school.id },
+  })
+
+  await db.moduleAssignment.upsert({
+    where: { moduleId_instructorId: { moduleId: paidModule2.id, instructorId: instructor.id } },
+    update: {},
+    create: { moduleId: paidModule2.id, instructorId: instructor.id, schoolId: school.id },
+  })
+
+  // Coupon valid for the paid course — 20 % off, unlimited uses
+  await db.coupon.upsert({
+    where: { schoolId_code: { schoolId: school.id, code: 'REACT20' } },
+    update: {},
+    create: {
+      schoolId: school.id,
+      courseId: paidCourse.id,
+      code: 'REACT20',
+      discountPct: 20,
+    },
+  })
+
+  // Also a site-wide 10 % coupon (no courseId restriction) for checkout testing
+  await db.coupon.upsert({
+    where: { schoolId_code: { schoolId: school.id, code: 'WELCOME10' } },
+    update: {},
+    create: {
+      schoolId: school.id,
+      code: 'WELCOME10',
+      discountPct: 10,
+    },
+  })
+
   // ── Review queue seed data ───────────────────────────────────────────────
   // Give lesson m1-3 some published blocks then a pending review with proposed edits.
 
@@ -480,14 +572,20 @@ Seed complete.
   Admin:      a@e.com  / password123
   Instructor: i@e.com  / password123
   Students:   s1@e.com, s2@e.com  / password123  (members, not enrolled)
-              s3@e.com            / password123  (enrolled)
-  Course:     Intro to TypeScript  (id: ${course.id})
-  Modules:    Types & Interfaces (${m1Lessons.length} lessons) | Generics & Utility Types (${m2Lessons.length} lessons)
-  Quizzes:    seed-quiz-m1 (${quizM1Questions.length} questions, 30 min cooldown)
-              seed-quiz-m2 (${quizM2Questions.length} questions, 60 min cooldown)
-  Homework:   seed-homework-m1 (${homeworkQuestions.length} questions)
-              Student URL: /learn/intro-to-typescript/homework/seed-homework-m1
-  Reviews:    2 pending reviews seeded (seed-review-1, seed-review-2)
+              s3@e.com            / password123  (enrolled in free course)
+
+  Free course:  Intro to TypeScript         /courses/intro-to-typescript
+    Modules:    Types & Interfaces (${m1Lessons.length} lessons) | Generics & Utility Types (${m2Lessons.length} lessons)
+    Quizzes:    seed-quiz-m1 (${quizM1Questions.length} questions, 30 min cooldown)
+                seed-quiz-m2 (${quizM2Questions.length} questions, 60 min cooldown)
+    Homework:   seed-homework-m1 (${homeworkQuestions.length} questions)
+    Reviews:    2 pending (seed-review-1, seed-review-2)
+
+  Paid course:  Advanced React Patterns  $79  /courses/advanced-react-patterns
+    Modules:    Compound Components (3 lessons) | Performance & Memoization (2 lessons)
+    Coupons:    REACT20  — 20% off (course-specific)
+                WELCOME10 — 10% off (site-wide)
+    Checkout:   /checkout/${paidCourse.id}
   `)
 }
 
