@@ -1,10 +1,11 @@
 import { z } from 'zod'
 
-const HomeworkQuestionTypeSchema = z.enum(['text', 'file_upload'])
+const HomeworkQuestionTypeSchema = z.enum(['text', 'file_upload', 'single_choice', 'multiple_choice'])
 
 const HomeworkQuestionSchema = z.object({
   text: z.string().min(1),
   type: HomeworkQuestionTypeSchema,
+  options: z.array(z.string()).optional(),
   required: z.boolean().optional(),
 })
 

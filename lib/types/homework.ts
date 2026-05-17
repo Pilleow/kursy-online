@@ -1,4 +1,4 @@
-export type HomeworkQuestionType = 'text' | 'file_upload'
+export type HomeworkQuestionType = 'text' | 'file_upload' | 'single_choice' | 'multiple_choice'
 
 export type HomeworkQuestion = {
   id: string
@@ -6,6 +6,7 @@ export type HomeworkQuestion = {
   schoolId: string
   text: string
   type: HomeworkQuestionType
+  options: string[] | null
   position: number
   required: boolean
   createdAt: Date
