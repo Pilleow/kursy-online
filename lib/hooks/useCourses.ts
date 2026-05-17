@@ -3,6 +3,7 @@ import type { Course, Module } from '@/lib/types'
 import {
   listCourses,
   getCourse,
+  getCourseBySlug,
   createCourse,
   updateCourse,
   deleteCourse,
@@ -22,6 +23,14 @@ export function useCourses(schoolId: string) {
     queryKey: ['courses', schoolId],
     queryFn: () => listCourses(),
     enabled: !!schoolId,
+  })
+}
+
+export function useCourseBySlug(slug: string) {
+  return useQuery({
+    queryKey: ['courses', 'slug', slug],
+    queryFn: () => getCourseBySlug(slug),
+    enabled: !!slug,
   })
 }
 

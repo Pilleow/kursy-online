@@ -1,5 +1,24 @@
-import type { Course, Module, Lesson, Block } from '@/lib/types'
+import type { Course, Module, Lesson, Block, LessonType, CompletionRequirements } from '@/lib/types'
 import { apiFetch } from './client'
+
+export type LessonSummary = {
+  id: string
+  title: string
+  position: number
+  type: LessonType
+  durationS: number | null
+}
+
+export type ModuleSummary = {
+  id: string
+  title: string
+  position: number
+  lessons: LessonSummary[]
+}
+
+export type CourseWithCurriculum = Course & {
+  modules: ModuleSummary[]
+}
 
 const BASE = '/api/v1'
 
@@ -21,6 +40,10 @@ export type ContentReviewWithRelations = {
 type CoursesResponse = { data: Course[]; meta: { page: number; limit: number; total: number } }
 
 // Courses
+
+export function getCourseBySlug(slug: string): Promise<CourseWithCurriculum> {
+  return apiFetch(`${BASE}/public/courses/${encodeURIComponent(slug)}`)
+}
 
 export function listCourses(): Promise<Course[]> {
   return apiFetch<CoursesResponse>(`${BASE}/courses`).then((r) => r.data)

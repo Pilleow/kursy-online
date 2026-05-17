@@ -13,9 +13,8 @@ export function useCompleteLesson() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: completeLesson,
-    onSuccess: (progress) => {
+    onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['progress'] })
-      qc.invalidateQueries({ queryKey: ['lessons', progress.lessonId] })
     },
   })
 }
