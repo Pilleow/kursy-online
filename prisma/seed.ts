@@ -454,6 +454,7 @@ async function main() {
         { type: 'text', id: 'blk-m3-1-1', html: '<h2>Union Types</h2><p>A union type describes a value that can be one of several types. You use the pipe (<code>|</code>) operator to separate each type.</p><pre><code>type StringOrNumber = string | number;\n\nfunction format(value: StringOrNumber): string {\n  if (typeof value === "string") return value.toUpperCase();\n  return value.toFixed(2);\n}</code></pre>' },
         { type: 'text', id: 'blk-m3-1-2', html: '<h2>Intersection Types</h2><p>An intersection type combines multiple types into one using the <code>&amp;</code> operator. The resulting type has all the properties of every constituent type.</p><pre><code>type HasName = { name: string };\ntype HasAge  = { age: number };\ntype Person  = HasName &amp; HasAge; // { name: string; age: number }</code></pre>' },
         { type: 'text', id: 'blk-m3-1-3', html: '<h2>When to Use Each</h2><p><strong>Union</strong> — when a value can be <em>one of several</em> shapes (e.g. API response vs error).<br/><strong>Intersection</strong> — when you want to <em>merge</em> capabilities from several interfaces (e.g. mixins).</p>' },
+        { type: 'qa_section', id: 'blk-m3-1-qa', prompt: 'Have questions about union or intersection types? Ask below and the instructor will answer.' },
       ],
     },
   })
@@ -1088,6 +1089,61 @@ async function main() {
     data: { blocks: [{ type: 'quiz', id: 'blk-quiz-paid-m1', quizId: paidQuiz.id }] },
   })
 
+  // ── Q&A seed data ────────────────────────────────────────────────────────
+  // Lesson seed-lesson-m3-1 has a qa_section block — seed questions + upvotes for UI testing.
+
+  const s1 = await db.user.findUniqueOrThrow({ where: { email: 's1@e.com' } })
+  const s2 = await db.user.findUniqueOrThrow({ where: { email: 's2@e.com' } })
+  const s3 = await db.user.findUniqueOrThrow({ where: { email: 's3@e.com' } })
+
+  const qaQ1 = await db.qAQuestion.upsert({
+    where: { id: 'seed-qa-q1' },
+    update: {},
+    create: {
+      id: 'seed-qa-q1',
+      lessonId: 'seed-lesson-m3-1',
+      schoolId: school.id,
+      userId: s1.id,
+      body: 'Can you give a real-world example where you would use an intersection type instead of extending an interface?',
+      upvotes: 3,
+      answer: 'Great question! Intersection types shine when combining two separate contracts you don\'t own — for example merging a Serializable mixin with a Timestamped mixin. Extending an interface requires a named base type, while & works with any type including inline anonymous shapes.',
+      answeredById: instructor.id,
+      answeredAt: new Date(Date.now() - 3_600_000),
+    },
+  })
+
+  const qaQ2 = await db.qAQuestion.upsert({
+    where: { id: 'seed-qa-q2' },
+    update: {},
+    create: {
+      id: 'seed-qa-q2',
+      lessonId: 'seed-lesson-m3-1',
+      schoolId: school.id,
+      userId: s3.id,
+      body: 'Is there a performance difference between union types and intersection types at runtime?',
+      upvotes: 1,
+    },
+  })
+
+  // Upvotes: s2 and s3 upvoted q1; s1 upvoted q2
+  await db.upvote.upsert({
+    where: { userId_questionId: { userId: s2.id, questionId: qaQ1.id } },
+    update: {},
+    create: { userId: s2.id, questionId: qaQ1.id },
+  })
+
+  await db.upvote.upsert({
+    where: { userId_questionId: { userId: s3.id, questionId: qaQ1.id } },
+    update: {},
+    create: { userId: s3.id, questionId: qaQ1.id },
+  })
+
+  await db.upvote.upsert({
+    where: { userId_questionId: { userId: s1.id, questionId: qaQ2.id } },
+    update: {},
+    create: { userId: s1.id, questionId: qaQ2.id },
+  })
+
   // ── Review queue seed data ───────────────────────────────────────────────
   // Give lesson m1-3 some published blocks then a pending review with proposed edits.
 
@@ -1177,6 +1233,9 @@ Seed complete.
                 seed-homework-m3 (${homeworkM3Questions.length} questions)
                 seed-homework-m4 (${homeworkM4Questions.length} questions)
     Reviews:    2 pending (seed-review-1, seed-review-2)
+    Q&A:        2 questions on "Union & Intersection Types" (seed-lesson-m3-1)
+                  q1 — answered by instructor, 3 upvotes
+                  q2 — unanswered, 1 upvote
 
   Paid course:  Advanced React Patterns  $79  /courses/advanced-react-patterns
     Modules:    Compound Components (3 lessons) | Performance & Memoization (2 lessons)

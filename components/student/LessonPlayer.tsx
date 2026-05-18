@@ -76,7 +76,13 @@ function HomeworkBlockRenderer({ block, courseSlug }: { block: HomeworkBlock; co
   )
 }
 
-function QASectionBlockRenderer({ block }: { block: QASectionBlock }) {
+function QASectionBlockRenderer({
+  block,
+  lessonId,
+}: {
+  block: QASectionBlock
+  lessonId: string
+}) {
   return (
     <div className="space-y-3">
       {block.prompt && (
@@ -85,11 +91,20 @@ function QASectionBlockRenderer({ block }: { block: QASectionBlock }) {
           <p className="text-sm text-gray-600 dark:text-gray-400">{block.prompt}</p>
         </div>
       )}
+      <QASection lessonId={lessonId} />
     </div>
   )
 }
 
-function BlockRenderer({ block, courseSlug }: { block: Block; courseSlug: string }) {
+function BlockRenderer({
+  block,
+  courseSlug,
+  lessonId,
+}: {
+  block: Block
+  courseSlug: string
+  lessonId: string
+}) {
   switch (block.type) {
     case 'text':
       return <TextBlockRenderer block={block} />
@@ -100,7 +115,7 @@ function BlockRenderer({ block, courseSlug }: { block: Block; courseSlug: string
     case 'homework':
       return <HomeworkBlockRenderer block={block} courseSlug={courseSlug} />
     case 'qa_section':
-      return <QASectionBlockRenderer block={block} />
+      return <QASectionBlockRenderer block={block} lessonId={lessonId} />
     default:
       return null
   }
@@ -203,7 +218,7 @@ export function LessonPlayer({ lessonId, courseSlug }: Props) {
       {blocks.length > 0 ? (
         <div className="space-y-6">
           {blocks.map((block) => (
-            <BlockRenderer key={block.id} block={block} courseSlug={courseSlug} />
+            <BlockRenderer key={block.id} block={block} courseSlug={courseSlug} lessonId={lessonId} />
           ))}
         </div>
       ) : (
@@ -211,11 +226,6 @@ export function LessonPlayer({ lessonId, courseSlug }: Props) {
           No content yet.
         </div>
       )}
-
-      {/* Q&A */}
-      <section className="border-t border-gray-100 pt-8">
-        <QASection lessonId={lessonId} />
-      </section>
 
       {/* Complete button */}
       <div className="flex items-center gap-4 border-t border-gray-100 pt-6">
