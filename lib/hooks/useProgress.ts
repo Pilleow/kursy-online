@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getCourseProgress, completeLesson, generateCertificate } from '@/lib/api/progress'
+import { getCourseProgress, completeLesson, generateCertificate, getCertificates } from '@/lib/api/progress'
 
 export function useCourseProgress(courseId: string) {
   return useQuery({
@@ -20,5 +20,18 @@ export function useCompleteLesson() {
 }
 
 export function useGenerateCertificate() {
-  return useMutation({ mutationFn: generateCertificate })
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: generateCertificate,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['certificates'] })
+    },
+  })
+}
+
+export function useCertificates() {
+  return useQuery({
+    queryKey: ['certificates'],
+    queryFn: getCertificates,
+  })
 }

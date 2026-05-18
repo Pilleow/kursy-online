@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { BookOpen, Clock, CheckCircle, FileText, ListChecks, MessageSquare } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { BookOpen, Clock, CheckCircle, FileText, ListChecks, MessageSquare, ArrowRight } from 'lucide-react'
 import { useLesson } from '@/lib/hooks/useLesson'
 import { useCompleteLesson } from '@/lib/hooks/useProgress'
 import { Button } from '@/components/ui/button'
@@ -44,10 +45,10 @@ function VideoBlockRenderer({ block }: { block: VideoBlock }) {
   )
 }
 
-function QuizBlockRenderer({ block, courseSlug }: { block: QuizBlock; courseSlug: string }) {
+function QuizBlockRenderer({ block, courseSlug, lessonId }: { block: QuizBlock; courseSlug: string; lessonId: string }) {
   return (
     <Link
-      href={`/learn/${courseSlug}/quiz/${block.quizId}`}
+      href={`/learn/${courseSlug}/quiz/${block.quizId}?from=${lessonId}`}
       className="flex items-center gap-3 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3 hover:bg-primary/10 transition-colors group"
     >
       <ListChecks className="h-5 w-5 text-primary shrink-0" />
@@ -60,10 +61,10 @@ function QuizBlockRenderer({ block, courseSlug }: { block: QuizBlock; courseSlug
   )
 }
 
-function HomeworkBlockRenderer({ block, courseSlug }: { block: HomeworkBlock; courseSlug: string }) {
+function HomeworkBlockRenderer({ block, courseSlug, lessonId }: { block: HomeworkBlock; courseSlug: string; lessonId: string }) {
   return (
     <Link
-      href={`/learn/${courseSlug}/homework/${block.homeworkId}`}
+      href={`/learn/${courseSlug}/homework/${block.homeworkId}?from=${lessonId}`}
       className="flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-900/30 dark:bg-amber-900/10 px-4 py-3 hover:bg-amber-100 dark:hover:bg-amber-900/20 transition-colors group"
     >
       <FileText className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0" />
@@ -111,9 +112,9 @@ function BlockRenderer({
     case 'video':
       return <VideoBlockRenderer block={block} />
     case 'quiz':
-      return <QuizBlockRenderer block={block} courseSlug={courseSlug} />
+      return <QuizBlockRenderer block={block} courseSlug={courseSlug} lessonId={lessonId} />
     case 'homework':
-      return <HomeworkBlockRenderer block={block} courseSlug={courseSlug} />
+      return <HomeworkBlockRenderer block={block} courseSlug={courseSlug} lessonId={lessonId} />
     case 'qa_section':
       return <QASectionBlockRenderer block={block} lessonId={lessonId} />
     default:
@@ -121,13 +122,19 @@ function BlockRenderer({
   }
 }
 
-function CompleteButton({ lessonId }: { lessonId: string }) {
+type CompleteButtonProps = {
+  lessonId: string
+  courseSlug: string
+  nextLessonId?: string
+}
+
+function CompleteButton({ lessonId, courseSlug, nextLessonId }: CompleteButtonProps) {
+  const router = useRouter()
   const sentinelRef = useRef<HTMLDivElement>(null)
   const [scrolledToBottom, setScrolledToBottom] = useState(false)
   const { mutate: completeLesson, isPending, isSuccess } = useCompleteLesson()
 
   useEffect(() => {
-    // Reset when lesson changes
     setScrolledToBottom(false)
   }, [lessonId])
 
@@ -145,10 +152,20 @@ function CompleteButton({ lessonId }: { lessonId: string }) {
   }, [lessonId])
 
   if (isSuccess) {
+    const nextHref = nextLessonId
+      ? `/learn/${courseSlug}?lesson=${nextLessonId}`
+      : `/dashboard`
+
     return (
-      <div className="flex items-center gap-2 text-green-600 text-sm font-medium">
-        <CheckCircle className="h-4 w-4" />
-        Lesson completed!
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-2 text-green-600 text-sm font-medium">
+          <CheckCircle className="h-4 w-4" />
+          Lesson completed!
+        </div>
+        <Button onClick={() => router.push(nextHref)} className="gap-1.5">
+          {nextLessonId ? 'Next Lesson' : 'Back to Dashboard'}
+          <ArrowRight className="h-4 w-4" />
+        </Button>
       </div>
     )
   }
@@ -171,9 +188,10 @@ function CompleteButton({ lessonId }: { lessonId: string }) {
 type Props = {
   lessonId: string
   courseSlug: string
+  nextLessonId?: string
 }
 
-export function LessonPlayer({ lessonId, courseSlug }: Props) {
+export function LessonPlayer({ lessonId, courseSlug, nextLessonId }: Props) {
   const { data: lesson, isLoading, isError } = useLesson(lessonId)
 
   if (isLoading) {
@@ -229,7 +247,7 @@ export function LessonPlayer({ lessonId, courseSlug }: Props) {
 
       {/* Complete button */}
       <div className="flex items-center gap-4 border-t border-gray-100 pt-6">
-        <CompleteButton lessonId={lessonId} />
+        <CompleteButton lessonId={lessonId} courseSlug={courseSlug} nextLessonId={nextLessonId} />
       </div>
     </article>
   )

@@ -28,6 +28,15 @@ export function LearnPageClient({ courseSlug, lessonId }: Props) {
   const completedLessonIds = progress?.completedLessonIds ?? []
   const percent = progress?.percentComplete ?? 0
 
+  const allLessons =
+    course?.modules
+      .slice()
+      .sort((a, b) => a.position - b.position)
+      .flatMap((m) => m.lessons.slice().sort((a, b) => a.position - b.position)) ?? []
+
+  const currentIdx = allLessons.findIndex((l) => l.id === lessonId)
+  const nextLesson = currentIdx >= 0 ? allLessons[currentIdx + 1] : undefined
+
   return (
     <div className="space-y-4">
       {/* Progress bar */}
@@ -57,7 +66,11 @@ export function LearnPageClient({ courseSlug, lessonId }: Props) {
         {/* Main lesson content */}
         <main className="flex-1 min-w-0">
           {lessonId ? (
-            <LessonPlayer lessonId={lessonId} courseSlug={courseSlug} />
+            <LessonPlayer
+              lessonId={lessonId}
+              courseSlug={courseSlug}
+              nextLessonId={nextLesson?.id}
+            />
           ) : !courseLoading ? (
             <div className="rounded-lg border border-dashed border-gray-200 p-12 text-center">
               <p className="text-sm text-gray-400">Select a lesson from the sidebar to begin.</p>

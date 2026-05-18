@@ -23,9 +23,10 @@ type Screen = 'loading' | 'form' | 'submitted'
 type Props = {
   hwId: string
   courseSlug: string
+  returnLessonId?: string
 }
 
-export function HomeworkPlayer({ hwId, courseSlug }: Props) {
+export function HomeworkPlayer({ hwId, courseSlug, returnLessonId }: Props) {
   const accessToken = useAuthStore((s) => s.accessToken)
   const router = useRouter()
   const hasLoaded = useRef(false)
@@ -85,12 +86,14 @@ export function HomeworkPlayer({ hwId, courseSlug }: Props) {
   async function handleCompleteLesson() {
     if (!homework) return
     setCompletingLesson(true)
+    const backHref = returnLessonId
+      ? `/learn/${courseSlug}?lesson=${returnLessonId}`
+      : `/learn/${courseSlug}`
     try {
       await completeLesson(homework.lessonId)
-      router.push(`/learn/${courseSlug}`)
+      router.push(backHref)
     } catch {
-      // non-fatal — navigate anyway so student doesn't get stuck
-      router.push(`/learn/${courseSlug}`)
+      router.push(backHref)
     }
   }
 
@@ -112,7 +115,7 @@ export function HomeworkPlayer({ hwId, courseSlug }: Props) {
   return (
     <div className="max-w-2xl mx-auto">
       <Button variant="ghost" size="sm" className="-ml-2 mb-6 text-gray-500" asChild>
-        <Link href={`/learn/${courseSlug}`}>
+        <Link href={returnLessonId ? `/learn/${courseSlug}?lesson=${returnLessonId}` : `/learn/${courseSlug}`}>
           <ArrowLeft className="h-4 w-4" />
           Back to course
         </Link>

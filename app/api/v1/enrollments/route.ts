@@ -26,6 +26,18 @@ const getHandler: TenantHandler = async (_req, ctx) => {
           status: true,
           priceUsd: true,
           accessDurationDays: true,
+          modules: {
+            take: 1,
+            orderBy: { position: 'asc' },
+            select: {
+              assignments: {
+                take: 1,
+                select: {
+                  instructor: { select: { firstName: true, lastName: true } },
+                },
+              },
+            },
+          },
         },
       },
       coupon: {
@@ -35,7 +47,28 @@ const getHandler: TenantHandler = async (_req, ctx) => {
     orderBy: { enrolledAt: 'desc' },
   })
 
-  return NextResponse.json(enrollments)
+  const shaped = enrollments.map(({ course, ...rest }) => {
+    const firstAssignment = course.modules?.[0]?.assignments?.[0]
+    const instructorName = firstAssignment
+      ? `${firstAssignment.instructor.firstName} ${firstAssignment.instructor.lastName}`
+      : null
+    return {
+      ...rest,
+      course: {
+        id: course.id,
+        title: course.title,
+        slug: course.slug,
+        description: course.description,
+        thumbnailUrl: course.thumbnailUrl,
+        status: course.status,
+        priceUsd: course.priceUsd,
+        accessDurationDays: course.accessDurationDays,
+        instructorName,
+      },
+    }
+  })
+
+  return NextResponse.json(shaped)
 }
 
 const postHandler: TenantHandler = async (req, ctx) => {

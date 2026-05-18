@@ -22,9 +22,10 @@ type Screen = 'loading' | 'cooldown' | 'quiz' | 'result'
 type Props = {
   quizId: string
   courseSlug?: string
+  returnLessonId?: string
 }
 
-export function QuizPlayer({ quizId, courseSlug }: Props) {
+export function QuizPlayer({ quizId, courseSlug, returnLessonId }: Props) {
   const accessToken = useAuthStore((s) => s.accessToken)
   const hasLoaded = useRef(false)
 
@@ -98,7 +99,11 @@ export function QuizPlayer({ quizId, courseSlug }: Props) {
     }
   }
 
-  const backHref = courseSlug ? `/learn/${courseSlug}` : '/dashboard'
+  const backHref = courseSlug
+    ? returnLessonId
+      ? `/learn/${courseSlug}?lesson=${returnLessonId}`
+      : `/learn/${courseSlug}`
+    : '/dashboard'
 
   if (screen === 'loading') {
     return (
