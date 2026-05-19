@@ -40,6 +40,13 @@ export function replaceBlocks(lessonId: string, blocks: Block[]): Promise<Lesson
   })
 }
 
+export function patchBlocks(lessonId: string, blocks: Block[]): Promise<Lesson> {
+  return apiFetch(`${BASE}/lessons/${lessonId}/blocks`, {
+    method: 'PATCH',
+    body: JSON.stringify({ blocks }),
+  })
+}
+
 export function submitLessonForReview(lessonId: string): Promise<Lesson> {
   return apiFetch(`${BASE}/lessons/${lessonId}/submit-for-review`, { method: 'POST' })
 }

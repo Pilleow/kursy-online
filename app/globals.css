@@ -73,3 +73,49 @@
     text-wrap: balance;
   }
 }
+
+/* ─── Tiptap editor ─────────────────────────────────────────────────────────── */
+
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: theme('colors.gray.400');
+  pointer-events: none;
+  height: 0;
+}
+
+.dark .ProseMirror p.is-editor-empty:first-child::before {
+  color: theme('colors.gray.600');
+}
+
+.ProseMirror:focus {
+  outline: none;
+}
+
+/* prose spacing inside the editor */
+.ProseMirror > * + * {
+  margin-top: 0.6em;
+}
+
+.ProseMirror ul,
+.ProseMirror ol {
+  padding-left: 1.25rem;
+}
+
+.ProseMirror blockquote {
+  border-left: 3px solid theme('colors.gray.300');
+  margin-left: 0;
+  padding-left: 0.75rem;
+  color: theme('colors.gray.500');
+}
+
+.ProseMirror code {
+  background: theme('colors.gray.100');
+  border-radius: 0.2em;
+  padding: 0.1em 0.3em;
+  font-size: 0.85em;
+}
+
+.dark .ProseMirror code {
+  background: theme('colors.gray.800');
+}
