@@ -39,10 +39,16 @@ export async function getPresignedUploadUrl(
 export async function getPresignedDownloadUrl(
   key: string,
   expiresIn = 3600,
+  contentDisposition?: string,
 ): Promise<string> {
-  return getSignedUrl(
-    s3,
-    new GetObjectCommand({ Bucket: bucket, Key: key }),
-    { expiresIn },
-  )
+  const cmd = new GetObjectCommand({
+    Bucket: bucket,
+    Key: key,
+    ...(contentDisposition ? { ResponseContentDisposition: contentDisposition } : {}),
+  })
+  const internalUrl = await getSignedUrl(s3, cmd, { expiresIn })
+  if (publicEndpoint && process.env.S3_ENDPOINT && publicEndpoint !== process.env.S3_ENDPOINT.replace(/\/$/, '')) {
+    return internalUrl.replace(process.env.S3_ENDPOINT.replace(/\/$/, ''), publicEndpoint)
+  }
+  return internalUrl
 }

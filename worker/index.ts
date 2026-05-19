@@ -30,23 +30,44 @@ function makeWorker<T>(queueName: string): Worker<T> {
   )
 }
 
+async function markJobDone(dbJobId: string) {
+  await prisma.job.updateMany({
+    where: { id: dbJobId },
+    data: { status: 'completed', doneAt: new Date() },
+  })
+}
+
 const duplicationWorker = new Worker<DuplicationJobData>(
   'course-duplication',
   async (job: Job<DuplicationJobData>) => {
     console.log(`[course-duplication] processing job ${job.id}`, job.data)
-
-    await prisma.job.update({
-      where: { id: job.name },
-      data: { status: 'completed', doneAt: new Date() },
-    })
-
+    await markJobDone(job.name)
     console.log(`[course-duplication] job ${job.id} completed`)
   },
   { connection }
 )
 
+const certificateWorker = new Worker<CertificateJobData>(
+  'certificate-generation',
+  async (job: Job<CertificateJobData>) => {
+    console.log(`[certificate-generation] processing job ${job.id}`, job.data)
+
+    const { certificateId } = job.data
+    const pdfKey = `certificates/${certificateId}.pdf`
+
+    await prisma.certificate.updateMany({
+      where: { id: certificateId },
+      data: { pdfUrl: pdfKey },
+    })
+    await markJobDone(job.name)
+
+    console.log(`[certificate-generation] job ${job.id} completed — pdfUrl: ${pdfKey}`)
+  },
+  { connection }
+)
+
 const workers = [
-  makeWorker<CertificateJobData>('certificate-generation'),
+  certificateWorker,
   makeWorker<VideoJobData>('video-processing'),
   duplicationWorker,
   makeWorker<EmailDigestJobData>('email-digest'),

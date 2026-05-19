@@ -33,9 +33,18 @@ const getHandler: TenantHandler = async (req, ctx) => {
     return NextResponse.json({ error: 'Certificate is not yet ready' }, { status: 202 })
   }
 
-  const downloadUrl = await getPresignedDownloadUrl(certificate.pdfUrl, 3600)
+  const format = req.nextUrl.searchParams.get('format')
 
-  return NextResponse.redirect(downloadUrl, 302)
+  if (format === 'json') {
+    const [viewUrl, downloadUrl] = await Promise.all([
+      getPresignedDownloadUrl(certificate.pdfUrl, 3600),
+      getPresignedDownloadUrl(certificate.pdfUrl, 3600, 'attachment; filename=certificate.pdf'),
+    ])
+    return NextResponse.json({ viewUrl, downloadUrl })
+  }
+
+  const viewUrl = await getPresignedDownloadUrl(certificate.pdfUrl, 3600)
+  return NextResponse.redirect(viewUrl, 302)
 }
 
 export const GET = withLogging(withAuth(withTenant(getHandler)))

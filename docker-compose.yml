@@ -12,7 +12,10 @@ services:
         mc admin config set local api cors_allow_origin='*' &&
         mc admin service restart local --json &&
         sleep 3 &&
-        mc ready local
+        mc ready local &&
+        echo 'JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZy9QYWdlcyAyIDAgUj4+ZW5kb2JqCjIgMCBvYmo8PC9UeXBlL1BhZ2VzL0tpZHNbMyAwIFJdL0NvdW50IDE+PmVuZG9iagozIDAgb2JqPDwvVHlwZS9QYWdlL01lZGlhQm94WzAgMCA2MTIgNzkyXS9QYXJlbnQgMiAwIFIvUmVzb3VyY2VzPDw+Pj4+CmVuZG9iagp4cmVmCjAgNAowMDAwMDAwMDAwIDY1NTM1IGYKMDAwMDAwMDAwOSAwMDAwMCBuCjAwMDAwMDAwNTggMDAwMDAgbgowMDAwMDAwMTE1IDAwMDAwIG4KdHJhaWxlcjw8L1NpemUgNC9Sb290IDEgMCBSPj4Kc3RhcnR4cmVmCjE5MAolJUVPRg==' | base64 -d > /tmp/seed-cert.pdf &&
+        mc cp --attr 'Content-Type=application/pdf' /tmp/seed-cert.pdf local/eduflow/certificates/seed-demo-certificate.pdf &&
+        echo 'Seed certificate uploaded.'
       "
 
   app:

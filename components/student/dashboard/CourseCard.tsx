@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { BookOpen, Award, Loader2, Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -9,7 +10,6 @@ import { Progress } from '@/components/ui/progress'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useCourseProgress, useGenerateCertificate } from '@/lib/hooks/useProgress'
 import { useCourseBySlug } from '@/lib/hooks/useCourses'
-import { useJob } from '@/lib/hooks/useJob'
 import type { EnrollmentWithCourse } from '@/lib/api/enrollments'
 import type { CertificateWithCourse } from '@/lib/api/progress'
 
@@ -20,17 +20,12 @@ type Props = {
 
 export function CourseCard({ enrollment, certificate }: Props) {
   const { course } = enrollment
-  const [pendingJobId, setPendingJobId] = useState<string | null>(null)
+  const router = useRouter()
+  const [isRedirecting, setIsRedirecting] = useState(false)
 
   const { data: curriculum, isLoading: curriculumLoading } = useCourseBySlug(course.slug)
   const { data: progress, isLoading: progressLoading } = useCourseProgress(course.id)
   const generateCert = useGenerateCertificate()
-  const { data: job } = useJob(pendingJobId)
-
-  // Clear pending job when generation completes
-  if (job?.status === 'completed' && pendingJobId) {
-    setPendingJobId(null)
-  }
 
   const isLoading = curriculumLoading || progressLoading
 
@@ -54,22 +49,20 @@ export function CourseCard({ enrollment, certificate }: Props) {
     ? `/learn/${course.slug}?lesson=${continueLesson.id}`
     : `/learn/${course.slug}`
 
-  const certUrl = certificate?.pdfUrl
-    ? `/api/v1/certificates/${certificate.id}`
-    : null
+  const certPageUrl = certificate ? `/certificates/${certificate.id}` : null
 
   async function handleGenerateCert() {
     try {
+      setIsRedirecting(true)
       const result = await generateCert.mutateAsync(course.id)
-      if (result.jobId) setPendingJobId(result.jobId)
+      const { certificateId, jobId } = result
+      router.push(`/certificates/${certificateId}${jobId ? `?jobId=${jobId}` : ''}`)
     } catch {
-      // toast handled by caller; ignore here
+      setIsRedirecting(false)
     }
   }
 
-  const isCertGenerating =
-    generateCert.isPending ||
-    (!!pendingJobId && job?.status !== 'completed' && job?.status !== 'failed')
+  const isCertGenerating = generateCert.isPending || isRedirecting
 
   return (
     <div className="flex gap-4 rounded-xl border border-gray-100 bg-white p-4 shadow-sm transition-shadow hover:shadow-md">
@@ -123,12 +116,12 @@ export function CourseCard({ enrollment, certificate }: Props) {
           {isComplete ? (
             <>
               {certificate ? (
-                certUrl ? (
+                certPageUrl ? (
                   <Button asChild size="sm" variant="outline">
-                    <a href={certUrl} target="_blank" rel="noreferrer">
+                    <Link href={certPageUrl}>
                       <Download className="mr-1.5 h-3.5 w-3.5" />
                       View Certificate
-                    </a>
+                    </Link>
                   </Button>
                 ) : (
                   <Button size="sm" variant="outline" disabled>

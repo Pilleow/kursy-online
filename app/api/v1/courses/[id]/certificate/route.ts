@@ -131,9 +131,10 @@ const postHandler: TenantHandler = async (req, ctx) => {
     studentId: userId,
     courseId,
     enrollmentId: enrollment.id,
+    certificateId: certificate.id,
   })
 
-  return NextResponse.json({ jobId: job.id }, { status: 202 })
+  return NextResponse.json({ jobId: job.id, certificateId: certificate.id }, { status: 202 })
 }
 
 export const POST = withLogging(withAuth(withTenant(postHandler)))

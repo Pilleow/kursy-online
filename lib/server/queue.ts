@@ -6,6 +6,7 @@ export interface CertificateJobData {
   studentId: string
   courseId: string
   enrollmentId: string
+  certificateId: string
 }
 
 export interface VideoJobData {

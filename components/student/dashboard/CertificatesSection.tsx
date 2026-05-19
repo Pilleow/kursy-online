@@ -1,6 +1,7 @@
 'use client'
 
-import { Award, Download } from 'lucide-react'
+import Link from 'next/link'
+import { Award, ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { CertificateWithCourse } from '@/lib/api/progress'
@@ -49,7 +50,6 @@ export function CertificatesSection({ certificates, isLoading }: Props) {
             month: 'long',
             day: 'numeric',
           })
-          const downloadUrl = cert.pdfUrl ? `/api/v1/certificates/${cert.id}` : null
 
           return (
             <div
@@ -63,18 +63,12 @@ export function CertificatesSection({ certificates, isLoading }: Props) {
                 <p className="font-medium text-gray-900 truncate">{cert.course.title}</p>
                 <p className="text-xs text-gray-500">Issued {issued}</p>
               </div>
-              {downloadUrl ? (
-                <Button asChild size="sm" variant="outline">
-                  <a href={downloadUrl} target="_blank" rel="noreferrer">
-                    <Download className="mr-1.5 h-3.5 w-3.5" />
-                    Download
-                  </a>
-                </Button>
-              ) : (
-                <Button size="sm" variant="outline" disabled>
-                  Generating…
-                </Button>
-              )}
+              <Button asChild size="sm" variant="outline">
+                <Link href={`/certificates/${cert.id}`}>
+                  <ExternalLink className="mr-1.5 h-3.5 w-3.5" />
+                  View
+                </Link>
+              </Button>
             </div>
           )
         })}

@@ -25,10 +25,18 @@ export function completeLesson(lessonId: string): Promise<{ isCompleted: boolean
   return apiFetch(`${BASE}/lessons/${lessonId}/complete`, { method: 'POST' })
 }
 
-export function generateCertificate(courseId: string): Promise<{ jobId: string; certificateId?: string }> {
+export function generateCertificate(courseId: string): Promise<{ jobId?: string; certificateId: string }> {
   return apiFetch(`${BASE}/courses/${courseId}/certificate`, { method: 'POST' })
 }
 
 export function getCertificates(): Promise<CertificateWithCourse[]> {
   return apiFetch(`${BASE}/certificates`)
+}
+
+export type CertificateUrls = { viewUrl: string; downloadUrl: string }
+
+export async function getCertificateUrls(id: string): Promise<CertificateUrls> {
+  const res = await apiFetch<CertificateUrls | { error: string }>(`${BASE}/certificates/${id}?format=json`)
+  if ('error' in res) throw new Error((res as { error: string }).error)
+  return res as CertificateUrls
 }

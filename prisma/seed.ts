@@ -1144,6 +1144,88 @@ async function main() {
     create: { userId: s1.id, questionId: qaQ2.id },
   })
 
+  // ── Student s3: 100% completion + certificate ────────────────────────────
+  // s3 is enrolled in the free course. Mark every published lesson complete
+  // so the certificate generation endpoint succeeds and the UI shows the
+  // "Get Certificate" button (and the certificate page once generated).
+
+  const publishedLessonIds = [
+    // Module 1 (published lessons only)
+    'seed-lesson-m1-1',
+    'seed-lesson-m1-2',
+    // Module 2
+    'seed-lesson-m2-1',
+    // Module 3 (all published)
+    'seed-lesson-m3-1',
+    'seed-lesson-m3-2',
+    'seed-lesson-m3-3',
+    'seed-lesson-m3-4',
+    'seed-lesson-m3-5',
+    'seed-lesson-m3-6',
+    'seed-lesson-m3-7',
+    // Module 4 (all published)
+    'seed-lesson-m4-1',
+    'seed-lesson-m4-2',
+    'seed-lesson-m4-3',
+    'seed-lesson-m4-4',
+    'seed-lesson-m4-5',
+    'seed-lesson-m4-6',
+    // Module 5 (all published)
+    'seed-lesson-m5-1',
+    'seed-lesson-m5-2',
+    'seed-lesson-m5-3',
+    'seed-lesson-m5-4',
+    'seed-lesson-m5-5',
+  ]
+
+  for (const lessonId of publishedLessonIds) {
+    await db.lessonProgress.upsert({
+      where: { lessonId_userId: { lessonId, userId: s3.id } },
+      update: { completed: true, completedAt: new Date() },
+      create: {
+        lessonId,
+        userId: s3.id,
+        schoolId: school.id,
+        completed: true,
+        completedAt: new Date(),
+      },
+    })
+  }
+
+  // Create the certificate record (simulating a completed worker run).
+  // Uses a fixed key that minio-init uploads on every docker compose up.
+  const s3Cert = await db.certificate.upsert({
+    where: { userId_courseId: { userId: s3.id, courseId: course.id } },
+    update: {},
+    create: {
+      userId: s3.id,
+      courseId: course.id,
+      schoolId: school.id,
+      pdfUrl: 'certificates/seed-demo-certificate.pdf',
+    },
+  })
+
+  // Corresponding completed Job record so the dashboard and cert page see a
+  // finished state without needing the BullMQ worker to run.
+  await db.job.upsert({
+    where: { id: 'seed-cert-job-s3' },
+    update: {},
+    create: {
+      id: 'seed-cert-job-s3',
+      schoolId: school.id,
+      userId: s3.id,
+      type: 'certificate_generation',
+      status: 'completed',
+      payload: {
+        studentId: s3.id,
+        courseId: course.id,
+        enrollmentId: '',
+        certificateId: s3Cert.id,
+      },
+      doneAt: new Date(),
+    },
+  })
+
   // ── Review queue seed data ───────────────────────────────────────────────
   // Give lesson m1-3 some published blocks then a pending review with proposed edits.
 
@@ -1216,7 +1298,7 @@ Seed complete.
   Admin:      a@e.com  / password123
   Instructor: i@e.com  / password123
   Students:   s1@e.com, s2@e.com  / password123  (members, not enrolled)
-              s3@e.com            / password123  (enrolled in free course)
+              s3@e.com            / password123  (enrolled, 100% complete, certificate: ${s3Cert.id})
 
   Free course:  Intro to TypeScript         /courses/intro-to-typescript
     Modules:    Types & Interfaces (${m1Lessons.length} lessons)
