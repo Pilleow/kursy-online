@@ -23,21 +23,37 @@ const getHandler: TenantHandler = async (req, ctx) => {
 
   const includeArchived = req.nextUrl.searchParams.get('includeArchived') === 'true'
 
-  const homeworks = await tx.homework.findMany({
-    where: {
-      schoolId,
-      lesson: { module: { courseId } },
-      ...(!includeArchived && { archivedAt: null }),
-    },
-    include: {
-      questions: { orderBy: { position: 'asc' } },
-      _count: { select: { submissions: true } },
-      lesson: { select: { title: true, moduleId: true } },
-    },
-    orderBy: { createdAt: 'asc' },
-  })
+  const [homeworks, pendingRaw] = await Promise.all([
+    tx.homework.findMany({
+      where: {
+        schoolId,
+        lesson: { module: { courseId } },
+        ...(!includeArchived && { archivedAt: null }),
+      },
+      include: {
+        questions: { orderBy: { position: 'asc' } },
+        _count: { select: { submissions: true } },
+        lesson: { select: { title: true, moduleId: true } },
+      },
+      orderBy: { createdAt: 'asc' },
+    }),
+    tx.homeworkSubmission.findMany({
+      where: { schoolId, feedback: null, homework: { lesson: { module: { courseId } } } },
+      select: { homeworkId: true },
+    }),
+  ])
 
-  return NextResponse.json(homeworks)
+  const pendingByHomework: Record<string, number> = {}
+  for (const s of pendingRaw) {
+    pendingByHomework[s.homeworkId] = (pendingByHomework[s.homeworkId] ?? 0) + 1
+  }
+
+  return NextResponse.json(
+    homeworks.map((hw) => ({
+      ...hw,
+      pendingSubmissionsCount: pendingByHomework[hw.id] ?? 0,
+    })),
+  )
 }
 
 export const GET = withLogging(compose('instructor')(getHandler))

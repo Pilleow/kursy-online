@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { ChevronDown, ChevronRight, CheckCircle, Clock, Send, Archive, ArchiveRestore } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { useQueryClient } from '@tanstack/react-query'
 import {
   listCourseHomeworks,
   listSubmissions,
@@ -22,6 +23,7 @@ type ExpandedSubmission = {
 
 export function HomeworkSubmissions({ courseId }: { courseId: string }) {
   const accessToken = useAuthStore((s) => s.accessToken)
+  const qc = useQueryClient()
   const hasLoaded = useRef(false)
 
   const [homeworks, setHomeworks] = useState<HomeworkWithSubmissionCount[]>([])
@@ -95,6 +97,9 @@ export function HomeworkSubmissions({ courseId }: { courseId: string }) {
         }
         return updated
       })
+      qc.invalidateQueries({ queryKey: ['instructor', 'stats'] })
+      qc.invalidateQueries({ queryKey: ['instructor', 'assignments'] })
+      qc.invalidateQueries({ queryKey: ['instructor', 'pending-submissions'] })
     } catch {
       setError('Failed to send feedback')
     } finally {
@@ -137,7 +142,16 @@ export function HomeworkSubmissions({ courseId }: { courseId: string }) {
     return <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">{error}</div>
   }
 
-  const activeHomeworks = homeworks.filter((h) => !h.archivedAt)
+  const activeWithPending = homeworks.filter((h) => {
+    if (h.archivedAt) return false
+    // If submissions have been loaded for this hw, use live pending count
+    const loaded = submissions[h.id]
+    if (loaded) {
+      return loaded.some((s) => !s.feedback && !successIds.has(s.id))
+    }
+    // Otherwise fall back to the server-supplied pending count
+    return h.pendingSubmissionsCount > 0
+  })
   const archivedHomeworks = homeworks.filter((h) => !!h.archivedAt)
 
   return (
@@ -150,23 +164,29 @@ export function HomeworkSubmissions({ courseId }: { courseId: string }) {
         </Button>
       </div>
 
-      {/* Active homeworks */}
-      <HomeworkList
-        homeworks={activeHomeworks}
-        submissions={submissions}
-        expandedHw={expandedHw}
-        expanded={expanded}
-        feedbackText={feedbackText}
-        sending={sending}
-        archiving={archiving}
-        successIds={successIds}
-        onToggle={toggleHomework}
-        onExpand={setExpanded}
-        onFeedbackChange={(id, text) => setFeedbackText((prev) => ({ ...prev, [id]: text }))}
-        onSendFeedback={handleFeedback}
-        onArchive={handleArchive}
-        showArchiveButton
-      />
+      {/* Active homeworks needing feedback */}
+      {activeWithPending.length === 0 && !showArchived ? (
+        <div className="rounded-xl border border-dashed border-gray-200 p-10 text-center text-sm text-gray-400 dark:border-gray-700">
+          No pending submissions — all caught up!
+        </div>
+      ) : (
+        <HomeworkList
+          homeworks={activeWithPending}
+          submissions={submissions}
+          expandedHw={expandedHw}
+          expanded={expanded}
+          feedbackText={feedbackText}
+          sending={sending}
+          archiving={archiving}
+          successIds={successIds}
+          onToggle={toggleHomework}
+          onExpand={setExpanded}
+          onFeedbackChange={(id, text) => setFeedbackText((prev) => ({ ...prev, [id]: text }))}
+          onSendFeedback={handleFeedback}
+          onArchive={handleArchive}
+          showArchiveButton
+        />
+      )}
 
       {/* Archived section */}
       {showArchived && archivedHomeworks.length > 0 && (
@@ -190,12 +210,6 @@ export function HomeworkSubmissions({ courseId }: { courseId: string }) {
             onArchive={handleArchive}
             archived
           />
-        </div>
-      )}
-
-      {activeHomeworks.length === 0 && !showArchived && (
-        <div className="rounded-xl border border-dashed border-gray-200 p-10 text-center text-sm text-gray-400">
-          No homeworks found for this course.
         </div>
       )}
     </div>

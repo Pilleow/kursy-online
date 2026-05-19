@@ -9,9 +9,10 @@ import {
   MessageSquare,
   ClipboardCheck,
   ChevronRight,
+  ChevronDown,
   LogOut,
 } from 'lucide-react'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 import { useInstructorAssignments, useInstructorStats } from '@/lib/hooks/useInstructorStats'
@@ -96,6 +97,17 @@ export function InstructorShell({ user, children }: { user: ShellUser; children:
     return Array.from(map.values())
   }, [assignments])
 
+  // collapsed courses — none collapsed by default
+  const [collapsedCourses, setCollapsedCourses] = useState<Set<string>>(new Set())
+  function toggleCourse(courseId: string) {
+    setCollapsedCourses((prev) => {
+      const next = new Set(prev)
+      if (next.has(courseId)) next.delete(courseId)
+      else next.add(courseId)
+      return next
+    })
+  }
+
   async function handleLogout() {
     await signOut({ redirect: false })
     router.push('/login')
@@ -146,48 +158,66 @@ export function InstructorShell({ user, children }: { user: ShellUser; children:
         )}
 
         {/* Nav */}
-        <nav className="flex-1 overflow-y-auto px-2 py-3 space-y-3">
+        <nav className="flex-1 overflow-y-auto px-2 py-3 space-y-1">
           {/* Dashboard */}
-          <div className="space-y-0.5">
-            <NavLink
-              href="/instructor/dashboard"
-              icon={LayoutDashboard}
-              label="Dashboard"
-              exact
-            />
-          </div>
+          <NavLink
+            href="/instructor/dashboard"
+            icon={LayoutDashboard}
+            label="Dashboard"
+            exact
+          />
 
-          {/* Course sections */}
-          {courseGroups.map((group) => (
-            <div key={group.courseId} className="space-y-0.5">
-              <p className="px-2.5 pb-0.5 pt-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 truncate">
-                {group.courseTitle}
-              </p>
+          {/* Course accordions */}
+          {courseGroups.map((group) => {
+            const isCollapsed = collapsedCourses.has(group.courseId)
+            const courseUnreadQA = group.modules.reduce((s, a) => s + a.module.unreadQACount, 0)
+            const coursePendingHw = group.modules.reduce((s, a) => s + a.module.pendingHomeworkCount, 0)
+            return (
+              <div key={group.courseId} className="pt-1">
+                {/* Course header toggle */}
+                <button
+                  onClick={() => toggleCourse(group.courseId)}
+                  className="flex w-full items-center gap-1.5 rounded-md px-2.5 py-1.5 text-left transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
+                >
+                  {isCollapsed ? (
+                    <ChevronRight className="h-3 w-3 shrink-0 text-gray-400" />
+                  ) : (
+                    <ChevronDown className="h-3 w-3 shrink-0 text-gray-400" />
+                  )}
+                  <span className="flex-1 truncate text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                    {group.courseTitle}
+                  </span>
+                </button>
 
-              {group.modules.map((a) => (
-                <NavLink
-                  key={a.assignmentId}
-                  href={`/instructor/courses/${group.courseId}/modules/${a.module.id}`}
-                  icon={BookOpen}
-                  label={a.module.title}
-                />
-              ))}
+                {!isCollapsed && (
+                  <div className="mt-0.5 space-y-0.5">
+                    {group.modules.map((a) => (
+                      <NavLink
+                        key={a.assignmentId}
+                        href={`/instructor/courses/${group.courseId}/modules/${a.module.id}`}
+                        icon={BookOpen}
+                        label={a.module.title}
+                      />
+                    ))}
 
-              <NavLink
-                href={`/instructor/courses/${group.courseId}/qa`}
-                icon={MessageSquare}
-                label="Q&amp;A"
-                badge={<AttentionBadge count={unreadQA} color="blue" />}
-              />
+                    <NavLink
+                      href={`/instructor/courses/${group.courseId}/qa`}
+                      icon={MessageSquare}
+                      label="Q&A"
+                      badge={<AttentionBadge count={courseUnreadQA} color="blue" />}
+                    />
 
-              <NavLink
-                href={`/instructor/courses/${group.courseId}/homework`}
-                icon={ClipboardCheck}
-                label="Homework"
-                badge={<AttentionBadge count={pendingHomework} color="orange" />}
-              />
-            </div>
-          ))}
+                    <NavLink
+                      href={`/instructor/courses/${group.courseId}/homework`}
+                      icon={ClipboardCheck}
+                      label="Homework"
+                      badge={<AttentionBadge count={coursePendingHw} color="orange" />}
+                    />
+                  </div>
+                )}
+              </div>
+            )
+          })}
 
           {/* Empty state */}
           {courseGroups.length === 0 && (

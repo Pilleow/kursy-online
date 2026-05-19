@@ -32,6 +32,8 @@ export function useAnswerQuestion(lessonId: string) {
       answerQuestion(questionId, body),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['qa', lessonId] })
+      qc.invalidateQueries({ queryKey: ['instructor', 'stats'] })
+      qc.invalidateQueries({ queryKey: ['instructor', 'assignments'] })
     },
   })
 }

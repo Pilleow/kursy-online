@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { MessageSquare, Send } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -10,12 +10,24 @@ import { QuestionCard } from './QuestionCard'
 
 type Sort = 'newest' | 'popular'
 
-export function QASection({ lessonId }: { lessonId: string }) {
+export function QASection({
+  lessonId,
+  onUnansweredCountChange,
+}: {
+  lessonId: string
+  onUnansweredCountChange?: (lessonId: string, count: number) => void
+}) {
   const role = useAuthStore((s) => s.role)
   const [sort, setSort] = useState<Sort>('newest')
   const [newBody, setNewBody] = useState('')
 
   const { data: questions = [], isLoading, isError } = useQA(lessonId, sort)
+
+  useEffect(() => {
+    if (!onUnansweredCountChange || isLoading) return
+    const count = questions.filter((q) => !q.answer).length
+    onUnansweredCountChange(lessonId, count)
+  }, [questions, isLoading, lessonId, onUnansweredCountChange])
   const postQuestion = usePostQuestion(lessonId)
   const upvoteQuestion = useUpvoteQuestion(lessonId, sort)
 

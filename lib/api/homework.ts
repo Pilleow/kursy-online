@@ -10,6 +10,7 @@ export type SubmissionWithUser = HomeworkSubmission & {
 }
 export type HomeworkWithSubmissionCount = HomeworkWithQuestions & {
   _count: { submissions: number }
+  pendingSubmissionsCount: number
   lesson: { title: string; moduleId: string }
 }
 
