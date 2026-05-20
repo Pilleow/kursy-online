@@ -9,8 +9,9 @@ import { useCompleteLesson } from '@/lib/hooks/useProgress'
 import { Button } from '@/components/ui/button'
 import { QASection } from '@/components/qa/QASection'
 import type { Block, TextBlock, VideoBlock, QuizBlock, HomeworkBlock, QASectionBlock } from '@/lib/types'
-// react-markdown is installed; TextBlock stores Tiptap HTML so we render via dangerouslySetInnerHTML.
-// Switch to <ReactMarkdown> here if block content changes to markdown strings.
+import { TiptapRenderer } from './TiptapRenderer'
+
+const TIPTAP_DOC_ID = 'tiptap-doc'
 
 function formatDuration(seconds: number): string {
   const m = Math.floor(seconds / 60)
@@ -18,7 +19,20 @@ function formatDuration(seconds: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`
 }
 
-function TextBlockRenderer({ block }: { block: TextBlock }) {
+function TextBlockRenderer({
+  block,
+  lessonId,
+  courseSlug,
+}: {
+  block: TextBlock
+  lessonId: string
+  courseSlug: string
+}) {
+  // The editor serialises the entire Tiptap doc as JSON into block.html.
+  // Detect this and delegate to TiptapRenderer; otherwise fall back to raw HTML.
+  if (block.id === TIPTAP_DOC_ID) {
+    return <TiptapRenderer tiptapJson={block.html} lessonId={lessonId} courseSlug={courseSlug} />
+  }
   return (
     <div
       className="prose prose-sm dark:prose-invert max-w-none"
@@ -108,7 +122,7 @@ function BlockRenderer({
 }) {
   switch (block.type) {
     case 'text':
-      return <TextBlockRenderer block={block} />
+      return <TextBlockRenderer block={block} lessonId={lessonId} courseSlug={courseSlug} />
     case 'video':
       return <VideoBlockRenderer block={block} />
     case 'quiz':

@@ -9,6 +9,7 @@ import { Save, Send, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/hooks/use-toast'
 import { QASectionNode } from './extensions/QASectionNode'
+import { VideoNode } from './extensions/VideoNode'
 import { SlashCommand } from './extensions/SlashCommand'
 import { buildSuggestion } from './CommandMenuList'
 import { patchBlocks } from '@/lib/api/lessons'
@@ -118,6 +119,7 @@ export function BlockEditor({ lessonId, initialBlocks, lessonStatus }: Props) {
         placeholder: 'Start writing, or type "/" for commands…',
       }),
       QASectionNode,
+      VideoNode,
       SlashCommand.configure({
         suggestion: buildSuggestion(),
       }),

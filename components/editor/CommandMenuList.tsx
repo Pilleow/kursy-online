@@ -42,7 +42,7 @@ const ALL_ITEMS: CommandItem[] = [
         .chain()
         .focus()
         .deleteRange(range)
-        .insertContent({ type: 'paragraph', content: [{ type: 'text', text: '📹 Video block (coming soon)' }] })
+        .insertContent({ type: 'videoBlock' })
         .run()
     },
   },

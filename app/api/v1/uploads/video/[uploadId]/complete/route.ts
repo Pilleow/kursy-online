@@ -15,7 +15,7 @@ function getUploadId(req: NextRequest): string {
 }
 
 const postHandler: AuthedHandler = async (req, ctx) => {
-  const { schoolId, role, isSystemAdmin } = ctx
+  const { userId, schoolId, role, isSystemAdmin } = ctx
 
   if (!isSystemAdmin) {
     if (!role || ROLE_RANK[role] < ROLE_RANK['instructor']) {
@@ -23,7 +23,7 @@ const postHandler: AuthedHandler = async (req, ctx) => {
     }
   }
 
-  if (!schoolId) {
+  if (!schoolId || !userId) {
     return NextResponse.json({ error: 'School context required' }, { status: 400 })
   }
 
@@ -36,20 +36,30 @@ const postHandler: AuthedHandler = async (req, ctx) => {
     return NextResponse.json({ error: 'Upload not found' }, { status: 404 })
   }
 
-  // Update commits immediately (no open transaction) so the worker always
-  // sees 'processing' status when it picks up the job below.
+  // Create the DB job record first so the polling endpoint has something to return.
+  const dbJob = await db.job.create({
+    data: {
+      schoolId,
+      userId,
+      type: 'video_processing',
+      status: 'pending',
+      payload: { uploadId: upload.id, s3Key: upload.s3Key },
+    },
+  })
+
   await db.videoUpload.update({
     where: { id: uploadId },
     data: { status: 'processing' },
   })
 
-  const job = await videoQueue.add('process', {
+  await videoQueue.add('process', {
     uploadId: upload.id,
     s3Key: upload.s3Key,
     schoolId: upload.schoolId,
+    dbJobId: dbJob.id,
   })
 
-  return NextResponse.json({ jobId: job.id })
+  return NextResponse.json({ jobId: dbJob.id })
 }
 
 export const POST = withLogging(withAuth(postHandler))

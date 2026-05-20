@@ -13,6 +13,7 @@ export interface VideoJobData {
   uploadId: string
   s3Key: string
   schoolId: string
+  dbJobId: string
 }
 
 export interface DuplicationJobData {

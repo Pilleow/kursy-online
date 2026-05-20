@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { ArrowLeft, BookOpen, Clock } from 'lucide-react'
 import { getLesson } from '@/lib/api/lessons'
 import { QASection } from '@/components/qa/QASection'
+import { TiptapRenderer } from './TiptapRenderer'
 import { useAuthStore } from '@/lib/store/authStore'
 import type { Lesson } from '@/lib/types'
 
@@ -69,9 +70,8 @@ export function LessonViewer({
     )
   }
 
-  const blocks: { type: string; content?: string }[] = Array.isArray(lesson.blocks)
-    ? (lesson.blocks as { type: string; content?: string }[])
-    : []
+  const rawBlocks = Array.isArray(lesson.blocks) ? (lesson.blocks as { type: string; id?: string; html?: string }[]) : []
+  const tiptapBlock = rawBlocks.find((b) => b.type === 'text' && b.id === 'tiptap-doc')
 
   return (
     <div className="max-w-3xl mx-auto py-8 px-4 space-y-10">
@@ -101,39 +101,9 @@ export function LessonViewer({
       </div>
 
       {/* Content blocks */}
-      {blocks.length > 0 ? (
-        <div className="prose dark:prose-invert max-w-none space-y-4">
-          {blocks.map((block, i) => {
-            if (block.type === 'text' && block.content) {
-              return (
-                <div
-                  key={i}
-                  className="text-gray-800 dark:text-gray-200 whitespace-pre-wrap"
-                >
-                  {block.content}
-                </div>
-              )
-            }
-            if (block.type === 'video' && block.content) {
-              return (
-                <div key={i} className="rounded-lg overflow-hidden bg-black aspect-video">
-                  <video
-                    src={block.content}
-                    controls
-                    className="w-full h-full"
-                  />
-                </div>
-              )
-            }
-            return (
-              <div
-                key={i}
-                className="rounded border border-dashed border-gray-300 dark:border-gray-700 p-3 text-xs text-gray-400"
-              >
-                [{block.type} block]
-              </div>
-            )
-          })}
+      {tiptapBlock?.html ? (
+        <div className="space-y-6">
+          <TiptapRenderer tiptapJson={tiptapBlock.html} lessonId={lessonId} courseSlug={courseSlug} />
         </div>
       ) : (
         <div className="rounded-lg border border-dashed border-gray-300 dark:border-gray-700 p-8 text-center text-sm text-gray-400">
@@ -141,10 +111,7 @@ export function LessonViewer({
         </div>
       )}
 
-      {/* Divider */}
       <hr className="border-gray-200 dark:border-gray-700" />
-
-      {/* Q&A */}
       <QASection lessonId={lessonId} />
     </div>
   )

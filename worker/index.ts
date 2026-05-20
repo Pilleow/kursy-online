@@ -66,9 +66,45 @@ const certificateWorker = new Worker<CertificateJobData>(
   { connection }
 )
 
+const videoWorker = new Worker<VideoJobData>(
+  'video-processing',
+  async (job: Job<VideoJobData>) => {
+    const { uploadId, s3Key, schoolId, dbJobId } = job.data
+    console.log(`[video-processing] processing job ${job.id}`, job.data)
+
+    await prisma.job.updateMany({
+      where: { id: dbJobId },
+      data: { status: 'processing', startedAt: new Date() },
+    })
+
+    // Generate a long-lived presigned URL (7 days) for playback.
+    // In production you would run transcoding here; for now we make
+    // the uploaded object directly playable.
+    const { getPresignedDownloadUrl } = await import('../lib/server/storage-core')
+    const videoUrl = await getPresignedDownloadUrl(s3Key, 60 * 60 * 24 * 7)
+
+    await prisma.videoUpload.updateMany({
+      where: { id: uploadId, schoolId },
+      data: { status: 'ready' },
+    })
+
+    await prisma.job.updateMany({
+      where: { id: dbJobId },
+      data: {
+        status: 'completed',
+        result: { resultUrl: videoUrl },
+        doneAt: new Date(),
+      },
+    })
+
+    console.log(`[video-processing] job ${job.id} completed — videoUrl ready`)
+  },
+  { connection },
+)
+
 const workers = [
   certificateWorker,
-  makeWorker<VideoJobData>('video-processing'),
+  videoWorker,
   duplicationWorker,
   makeWorker<EmailDigestJobData>('email-digest'),
 ]
