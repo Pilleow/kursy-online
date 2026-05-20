@@ -128,11 +128,11 @@ export function InstructorShell({ user, children }: { user: ShellUser; children:
       <aside className="flex w-60 shrink-0 flex-col border-r border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-950">
         {/* Logo */}
         <div className="flex h-12 items-center gap-2.5 border-b border-gray-100 dark:border-gray-800 px-4">
-          <div className="flex h-6 w-6 items-center justify-center rounded bg-primary text-primary-foreground text-xs font-bold shrink-0">
-            E
+          <div className="flex h-6 w-6 items-center justify-center rounded bg-[#012c4f] text-white text-xs font-bold shrink-0">
+            N
           </div>
           <span className="text-sm font-semibold tracking-tight text-gray-900 dark:text-gray-50 truncate">
-            EduFlow
+            NGV
           </span>
           <span className="ml-auto text-[10px] font-medium text-gray-400 uppercase tracking-wide">
             Instructor

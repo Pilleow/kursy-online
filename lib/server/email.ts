@@ -18,10 +18,10 @@ export async function sendFeedbackEmail(
   feedback: string,
 ): Promise<void> {
   await transporter.sendMail({
-    from: process.env.EMAIL_FROM ?? `"EduFlow" <noreply@eduflow.dev>`,
+    from: process.env.EMAIL_FROM ?? `"NGV" <noreply@ngv.dev>`,
     to,
     subject: `Feedback on your homework — ${courseName}`,
-    text: `Hi ${studentName},\n\nYour instructor has reviewed your homework submission for "${courseName}".\n\nFeedback:\n${feedback}\n\n— EduFlow`,
-    html: `<p>Hi ${studentName},</p><p>Your instructor has reviewed your homework submission for <strong>${courseName}</strong>.</p><blockquote>${feedback.replace(/\n/g, '<br>')}</blockquote><p>— EduFlow</p>`,
+    text: `Hi ${studentName},\n\nYour instructor has reviewed your homework submission for "${courseName}".\n\nFeedback:\n${feedback}\n\n— NGV`,
+    html: `<p>Hi ${studentName},</p><p>Your instructor has reviewed your homework submission for <strong>${courseName}</strong>.</p><blockquote>${feedback.replace(/\n/g, '<br>')}</blockquote><p>— NGV</p>`,
   })
 }

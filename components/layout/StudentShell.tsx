@@ -75,10 +75,10 @@ export function StudentShell({ user, breadcrumb, children }: StudentShellProps) 
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-6">
           <div className="flex items-center gap-3">
             <Link href="/dashboard" className="flex items-center gap-2.5 select-none">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground text-sm font-bold">
-                E
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#012c4f] text-white text-sm font-bold">
+                N
               </div>
-              <span className="text-base font-semibold tracking-tight text-gray-900">EduFlow</span>
+              <span className="text-base font-semibold tracking-tight text-gray-900">NGV</span>
             </Link>
 
             {breadcrumb && (

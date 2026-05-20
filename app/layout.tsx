@@ -1,17 +1,17 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Raleway } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from '@/components/layout/ThemeProvider';
 import { Toaster } from '@/components/ui/toaster';
 import { QueryProvider } from '@/components/layout/QueryProvider';
 
-const inter = Inter({
+const raleway = Raleway({
   subsets: ['latin'],
-  variable: '--font-inter',
+  variable: '--font-raleway',
 });
 
 export const metadata: Metadata = {
-  title: 'EduFlow',
+  title: 'NGV',
   description: 'SaaS Multi-Tenant Course Management Platform',
 };
 
@@ -22,7 +22,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} font-sans antialiased`}>
+      <body className={`${raleway.variable} font-sans antialiased`}>
         <QueryProvider>
           <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
             {children}

@@ -3,7 +3,7 @@ import { db } from '@/lib/server/db'
 import { CourseGrid, type PublicCourse } from '@/components/student/CourseGrid'
 
 export const metadata: Metadata = {
-  title: 'EduFlow — Online Courses',
+  title: 'NGV — Online Courses',
   description:
     'Browse our catalog of published courses. Learn at your own pace with expert instructors.',
 }

@@ -7,7 +7,7 @@ const usePretty =
   process.env.NODE_ENV !== "production" && !process.env.NEXT_RUNTIME;
 
 const logger = pino({
-  base: { service: "eduflow" },
+  base: { service: "ngv" },
   level: process.env.NODE_ENV === "production" ? "info" : "debug",
   ...(usePretty && {
     transport: {

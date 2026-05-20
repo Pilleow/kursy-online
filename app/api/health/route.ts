@@ -14,7 +14,7 @@ const s3 = new S3Client({
   },
 })
 
-const bucket = process.env.S3_BUCKET ?? 'eduflow'
+const bucket = process.env.S3_BUCKET ?? 'ngv'
 
 export async function GET() {
   const [dbResult, redisResult, storageResult] = await Promise.allSettled([

@@ -76,7 +76,7 @@ export function SystemShell({ user, children }: { user: ShellUser; children: Rea
         {/* Logo */}
         <div className="flex h-12 items-center gap-2.5 border-b border-gray-800 px-4">
           <Shield className="h-5 w-5 text-red-400 shrink-0" />
-          <span className="text-sm font-semibold tracking-tight truncate">EduFlow</span>
+          <span className="text-sm font-semibold tracking-tight truncate">NGV</span>
           <span className="ml-auto text-[10px] font-medium text-red-400 uppercase tracking-wide">
             System
           </span>

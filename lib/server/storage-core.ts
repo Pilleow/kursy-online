@@ -12,7 +12,7 @@ const s3 = new S3Client({
 })
 
 const publicEndpoint = (process.env.S3_PUBLIC_ENDPOINT ?? process.env.S3_ENDPOINT ?? '').replace(/\/$/, '')
-const bucket = process.env.S3_BUCKET ?? 'eduflow'
+const bucket = process.env.S3_BUCKET ?? 'ngv'
 
 function rewriteToPublic(url: string): string {
   const internalBase = process.env.S3_ENDPOINT?.replace(/\/$/, '')

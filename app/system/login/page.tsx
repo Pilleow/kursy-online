@@ -80,7 +80,7 @@ export default function SystemLoginPage() {
           <Shield className="h-6 w-6" />
         </div>
         <div className="text-center">
-          <span className="block text-2xl font-bold tracking-tight text-white">EduFlow</span>
+          <span className="block text-2xl font-bold tracking-tight text-white">NGV</span>
           <span className="text-sm text-gray-400">System Administration</span>
         </div>
       </div>
@@ -105,7 +105,7 @@ export default function SystemLoginPage() {
                     <FormControl>
                       <Input
                         type="email"
-                        placeholder="sysadmin@eduflow.dev"
+                        placeholder="sysadmin@ngv.dev"
                         autoComplete="email"
                         className="bg-gray-800 border-gray-700 text-gray-100 placeholder:text-gray-500"
                         {...field}

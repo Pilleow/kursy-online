@@ -35,7 +35,7 @@ async function main() {
   // ── System Admin ─────────────────────────────────────────────────────────
   // Bootstrapped from env so credentials are never hard-coded in source.
 
-  const sysEmail = process.env.SYSTEM_ADMIN_EMAIL ?? 'sysadmin@eduflow.dev'
+  const sysEmail = process.env.SYSTEM_ADMIN_EMAIL ?? 'sysadmin@ngv.dev'
   const sysPassword = process.env.SYSTEM_ADMIN_PASSWORD ?? 'changeme'
   const sysHash = await bcrypt.hash(sysPassword, 10)
 

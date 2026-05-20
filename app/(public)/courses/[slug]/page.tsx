@@ -33,7 +33,7 @@ export async function generateMetadata({
   if (!course) return { title: 'Course not found' }
 
   return {
-    title: `${course.title} — EduFlow`,
+    title: `${course.title} — NGV`,
     description: course.description ?? undefined,
     openGraph: {
       title: course.title,
