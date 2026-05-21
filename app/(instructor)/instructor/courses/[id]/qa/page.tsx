@@ -1,4 +1,4 @@
-import { InstructorQAPanel } from '@/components/qa/InstructorQAPanel'
+import { QAList } from '@/components/qa/QAList'
 
 type Props = { params: Promise<{ id: string }> }
 
@@ -13,7 +13,7 @@ export default async function InstructorQAPage({ params }: Props) {
           Browse and answer student questions across all lessons.
         </p>
       </div>
-      <InstructorQAPanel courseId={id} />
+      <QAList courseId={id} />
     </div>
   )
 }

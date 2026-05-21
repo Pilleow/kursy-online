@@ -40,3 +40,12 @@ export function answerQuestion(
 export function upvoteQuestion(questionId: string): Promise<UpvoteResult> {
   return apiFetch(`${BASE}/qa/${questionId}/upvote`, { method: 'POST' })
 }
+
+export type QAQuestionWithContext = QAQuestionWithMeta & {
+  lessonTitle: string
+  moduleTitle: string
+}
+
+export function listCourseQA(courseId: string): Promise<QAQuestionWithContext[]> {
+  return apiFetch(`${BASE}/courses/${courseId}/qa`)
+}

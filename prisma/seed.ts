@@ -1090,12 +1090,14 @@ async function main() {
   })
 
   // ── Q&A seed data ────────────────────────────────────────────────────────
-  // Lesson seed-lesson-m3-1 has a qa_section block — seed questions + upvotes for UI testing.
+  // Spread questions across multiple lessons/modules so the instructor
+  // unified QAList shows a realistic mix of answered + unanswered items.
 
   const s1 = await db.user.findUniqueOrThrow({ where: { email: 's1@e.com' } })
   const s2 = await db.user.findUniqueOrThrow({ where: { email: 's2@e.com' } })
   const s3 = await db.user.findUniqueOrThrow({ where: { email: 's3@e.com' } })
 
+  // ── Module 3, Lesson 1: Union & Intersection Types ───────────────────────
   const qaQ1 = await db.qAQuestion.upsert({
     where: { id: 'seed-qa-q1' },
     update: {},
@@ -1125,24 +1127,169 @@ async function main() {
     },
   })
 
-  // Upvotes: s2 and s3 upvoted q1; s1 upvoted q2
-  await db.upvote.upsert({
-    where: { userId_questionId: { userId: s2.id, questionId: qaQ1.id } },
+  const qaQ3 = await db.qAQuestion.upsert({
+    where: { id: 'seed-qa-q3' },
     update: {},
-    create: { userId: s2.id, questionId: qaQ1.id },
+    create: {
+      id: 'seed-qa-q3',
+      lessonId: 'seed-lesson-m3-1',
+      schoolId: school.id,
+      userId: s2.id,
+      body: 'When would you choose a union type over function overloads to handle multiple input shapes?',
+      upvotes: 2,
+    },
   })
 
-  await db.upvote.upsert({
-    where: { userId_questionId: { userId: s3.id, questionId: qaQ1.id } },
+  // ── Module 3, Lesson 2: Discriminated Unions ─────────────────────────────
+  const qaQ4 = await db.qAQuestion.upsert({
+    where: { id: 'seed-qa-q4' },
     update: {},
-    create: { userId: s3.id, questionId: qaQ1.id },
+    create: {
+      id: 'seed-qa-q4',
+      lessonId: 'seed-lesson-m3-2',
+      schoolId: school.id,
+      userId: s1.id,
+      body: 'How does TypeScript know which branch of a discriminated union to narrow to inside a switch statement?',
+      upvotes: 4,
+      answer: 'TypeScript tracks the discriminant property (e.g. kind) as a literal type. In each case branch the compiler treats the type as the specific variant whose discriminant matches that literal. If you exhaust all cases TypeScript infers never — which is how exhaustiveness checks work.',
+      answeredById: instructor.id,
+      answeredAt: new Date(Date.now() - 7_200_000),
+    },
   })
 
-  await db.upvote.upsert({
-    where: { userId_questionId: { userId: s1.id, questionId: qaQ2.id } },
+  const qaQ5 = await db.qAQuestion.upsert({
+    where: { id: 'seed-qa-q5' },
     update: {},
-    create: { userId: s1.id, questionId: qaQ2.id },
+    create: {
+      id: 'seed-qa-q5',
+      lessonId: 'seed-lesson-m3-2',
+      schoolId: school.id,
+      userId: s2.id,
+      body: 'Is it possible to have a discriminated union with more than one discriminant property?',
+      upvotes: 0,
+    },
   })
+
+  // ── Module 3, Lesson 3: Mapped Types ─────────────────────────────────────
+  const qaQ6 = await db.qAQuestion.upsert({
+    where: { id: 'seed-qa-q6' },
+    update: {},
+    create: {
+      id: 'seed-qa-q6',
+      lessonId: 'seed-lesson-m3-3',
+      schoolId: school.id,
+      userId: s3.id,
+      body: 'How do I remove the readonly modifier from all properties using a mapped type?',
+      upvotes: 2,
+    },
+  })
+
+  // ── Module 4, Lesson 1: Typing Functions ─────────────────────────────────
+  const qaQ7 = await db.qAQuestion.upsert({
+    where: { id: 'seed-qa-q7' },
+    update: {},
+    create: {
+      id: 'seed-qa-q7',
+      lessonId: 'seed-lesson-m4-1',
+      schoolId: school.id,
+      userId: s1.id,
+      body: 'What is the difference between void and undefined as a function return type?',
+      upvotes: 5,
+      answer: 'void means "the return value will not be used" — a function typed as void can still return a value, the caller simply ignores it. undefined is a specific type: the function must explicitly return undefined (or return with no value). Use void for callbacks, undefined when the absence of a value is semantically meaningful.',
+      answeredById: instructor.id,
+      answeredAt: new Date(Date.now() - 1_800_000),
+    },
+  })
+
+  const qaQ8 = await db.qAQuestion.upsert({
+    where: { id: 'seed-qa-q8' },
+    update: {},
+    create: {
+      id: 'seed-qa-q8',
+      lessonId: 'seed-lesson-m4-1',
+      schoolId: school.id,
+      userId: s2.id,
+      body: 'Can I type a function that accepts different numbers of arguments without overloads?',
+      upvotes: 1,
+    },
+  })
+
+  // ── Module 4, Lesson 3: Classes ───────────────────────────────────────────
+  const qaQ9 = await db.qAQuestion.upsert({
+    where: { id: 'seed-qa-q9' },
+    update: {},
+    create: {
+      id: 'seed-qa-q9',
+      lessonId: 'seed-lesson-m4-3',
+      schoolId: school.id,
+      userId: s3.id,
+      body: 'Does TypeScript\'s private modifier provide real encapsulation at runtime or only at compile time?',
+      upvotes: 6,
+    },
+  })
+
+  // ── Module 1, Lesson 2: Primitive Types ──────────────────────────────────
+  const qaQ10 = await db.qAQuestion.upsert({
+    where: { id: 'seed-qa-q10' },
+    update: {},
+    create: {
+      id: 'seed-qa-q10',
+      lessonId: 'seed-lesson-m1-2',
+      schoolId: school.id,
+      userId: s2.id,
+      body: 'What is the difference between the types number and Number (capital N) in TypeScript?',
+      upvotes: 3,
+      answer: 'Lowercase number is the primitive type — always use this. Uppercase Number refers to the JavaScript wrapper object. TypeScript allows assignability between them but the wrapper object has different prototype methods and is almost never what you want. Stick to primitives: string, number, boolean.',
+      answeredById: instructor.id,
+      answeredAt: new Date(Date.now() - 86_400_000),
+    },
+  })
+
+  // ── Upvotes ───────────────────────────────────────────────────────────────
+  const upvotePairs: Array<{ userId: string; questionId: string }> = [
+    // q1: s2, s3 upvoted
+    { userId: s2.id, questionId: qaQ1.id },
+    { userId: s3.id, questionId: qaQ1.id },
+    // q2: s1 upvoted
+    { userId: s1.id, questionId: qaQ2.id },
+    // q3: s1, s3 upvoted
+    { userId: s1.id, questionId: qaQ3.id },
+    { userId: s3.id, questionId: qaQ3.id },
+    // q4: s1, s2, s3, instructor upvoted
+    { userId: s1.id, questionId: qaQ4.id },
+    { userId: s2.id, questionId: qaQ4.id },
+    { userId: s3.id, questionId: qaQ4.id },
+    { userId: instructor.id, questionId: qaQ4.id },
+    // q6: s1, s2 upvoted
+    { userId: s1.id, questionId: qaQ6.id },
+    { userId: s2.id, questionId: qaQ6.id },
+    // q7: s1, s2, s3, instructor, admin upvoted
+    { userId: s1.id, questionId: qaQ7.id },
+    { userId: s2.id, questionId: qaQ7.id },
+    { userId: s3.id, questionId: qaQ7.id },
+    { userId: instructor.id, questionId: qaQ7.id },
+    { userId: admin.id, questionId: qaQ7.id },
+    // q8: s3 upvoted
+    { userId: s3.id, questionId: qaQ8.id },
+    // q9: s1, s2, s3, instructor, admin, admin upvoted — 6 total (pre-set)
+    { userId: s1.id, questionId: qaQ9.id },
+    { userId: s2.id, questionId: qaQ9.id },
+    { userId: s3.id, questionId: qaQ9.id },
+    { userId: instructor.id, questionId: qaQ9.id },
+    { userId: admin.id, questionId: qaQ9.id },
+    // q10: s1, s3, instructor upvoted
+    { userId: s1.id, questionId: qaQ10.id },
+    { userId: s3.id, questionId: qaQ10.id },
+    { userId: instructor.id, questionId: qaQ10.id },
+  ]
+
+  for (const pair of upvotePairs) {
+    await db.upvote.upsert({
+      where: { userId_questionId: pair },
+      update: {},
+      create: pair,
+    })
+  }
 
   // ── Student s3: 100% completion + certificate ────────────────────────────
   // s3 is enrolled in the free course. Mark every published lesson complete
@@ -1315,9 +1462,13 @@ Seed complete.
                 seed-homework-m3 (${homeworkM3Questions.length} questions)
                 seed-homework-m4 (${homeworkM4Questions.length} questions)
     Reviews:    2 pending (seed-review-1, seed-review-2)
-    Q&A:        2 questions on "Union & Intersection Types" (seed-lesson-m3-1)
-                  q1 — answered by instructor, 3 upvotes
-                  q2 — unanswered, 1 upvote
+    Q&A:        10 questions across 6 lessons (5 answered, 5 unanswered)
+                  Module 1 · Primitive Types         — 1 answered
+                  Module 3 · Union & Intersection    — 1 answered, 2 unanswered
+                  Module 3 · Discriminated Unions    — 1 answered, 1 unanswered
+                  Module 3 · Mapped Types            — 1 unanswered
+                  Module 4 · Typing Functions        — 1 answered, 1 unanswered
+                  Module 4 · Classes                 — 1 unanswered (6 upvotes)
 
   Paid course:  Advanced React Patterns  $79  /courses/advanced-react-patterns
     Modules:    Compound Components (3 lessons) | Performance & Memoization (2 lessons)
