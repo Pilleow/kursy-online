@@ -12,6 +12,7 @@ import {
   uploadToPresignedUrl,
   completeVideoUpload,
 } from '@/lib/api/uploads'
+import { DeleteBlockButton } from './DeleteBlockButton'
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -124,7 +125,7 @@ function ReadyState({ url, thumbnail }: { url: string; thumbnail?: string }) {
 
 // ─── VideoBlock NodeView ────────────────────────────────────────────────────────
 
-export function VideoBlock({ node, updateAttributes }: NodeViewProps) {
+export function VideoBlock({ node, updateAttributes, deleteNode }: NodeViewProps) {
   const { uploadId, status, videoUrl, thumbnail } = node.attrs as {
     uploadId: string | null
     status: UploadPhase
@@ -193,19 +194,26 @@ export function VideoBlock({ node, updateAttributes }: NodeViewProps) {
 
   return (
     <NodeViewWrapper>
-      {(phase === 'idle' || phase === 'uploading' || phase === 'error') && (
-        <UploadState
-          onFile={handleFile}
-          progress={progress}
-          isUploading={phase === 'uploading'}
-          error={error}
-        />
-      )}
-      {phase === 'processing' && <ProcessingState />}
-      {phase === 'ready' && videoUrl && (
-        <ReadyState url={videoUrl} thumbnail={thumbnail ?? undefined} />
-      )}
-      {phase === 'ready' && !videoUrl && <ProcessingState />}
+      <div className="group relative">
+        {/* Delete button — appears on hover in the top-right corner */}
+        <div className="absolute right-2 top-2 z-10 opacity-0 transition-opacity group-hover:opacity-100">
+          <DeleteBlockButton label="video" onConfirm={deleteNode} />
+        </div>
+
+        {(phase === 'idle' || phase === 'uploading' || phase === 'error') && (
+          <UploadState
+            onFile={handleFile}
+            progress={progress}
+            isUploading={phase === 'uploading'}
+            error={error}
+          />
+        )}
+        {phase === 'processing' && <ProcessingState />}
+        {phase === 'ready' && videoUrl && (
+          <ReadyState url={videoUrl} thumbnail={thumbnail ?? undefined} />
+        )}
+        {phase === 'ready' && !videoUrl && <ProcessingState />}
+      </div>
     </NodeViewWrapper>
   )
 }

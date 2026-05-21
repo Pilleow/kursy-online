@@ -10,6 +10,8 @@ import { Button } from '@/components/ui/button'
 import { useToast } from '@/hooks/use-toast'
 import { QASectionNode } from './extensions/QASectionNode'
 import { VideoNode } from './extensions/VideoNode'
+import { QuizNode } from './extensions/QuizNode'
+import { GuardedDelete } from './extensions/GuardedDelete'
 import { SlashCommand } from './extensions/SlashCommand'
 import { buildSuggestion } from './CommandMenuList'
 import { patchBlocks } from '@/lib/api/lessons'
@@ -120,8 +122,10 @@ export function BlockEditor({ lessonId, initialBlocks, lessonStatus }: Props) {
       }),
       QASectionNode,
       VideoNode,
+      QuizNode,
+      GuardedDelete,
       SlashCommand.configure({
-        suggestion: buildSuggestion(),
+        suggestion: buildSuggestion(lessonId),
       }),
     ],
     content: blocksToContent(initialBlocks) ?? '',

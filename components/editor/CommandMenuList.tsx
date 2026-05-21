@@ -24,63 +24,73 @@ type CommandItem = {
   command: (args: { editor: Editor; range: Range }) => void
 }
 
-const ALL_ITEMS: CommandItem[] = [
-  {
-    label: 'Text',
-    description: 'Plain paragraph',
-    icon: Type,
-    command: ({ editor, range }) => {
-      editor.chain().focus().deleteRange(range).setParagraph().run()
+function buildItems(lessonId?: string): CommandItem[] {
+  return [
+    {
+      label: 'Text',
+      description: 'Plain paragraph',
+      icon: Type,
+      command: ({ editor, range }) => {
+        editor.chain().focus().deleteRange(range).setParagraph().run()
+      },
     },
-  },
-  {
-    label: 'Video',
-    description: 'Embed a video block',
-    icon: Video,
-    command: ({ editor, range }) => {
-      editor
-        .chain()
-        .focus()
-        .deleteRange(range)
-        .insertContent({ type: 'videoBlock' })
-        .run()
+    {
+      label: 'Video',
+      description: 'Embed a video block',
+      icon: Video,
+      command: ({ editor, range }) => {
+        editor
+          .chain()
+          .focus()
+          .deleteRange(range)
+          .insertContent({ type: 'videoBlock' })
+          .run()
+      },
     },
-  },
-  {
-    label: 'Quiz',
-    description: 'Add a quiz block',
-    icon: HelpCircle,
-    command: ({ editor, range }) => {
-      editor
-        .chain()
-        .focus()
-        .deleteRange(range)
-        .insertContent({ type: 'paragraph', content: [{ type: 'text', text: '❓ Quiz block (coming soon)' }] })
-        .run()
+    {
+      label: 'Quiz',
+      description: 'Add an inline quiz',
+      icon: HelpCircle,
+      command: ({ editor, range }) => {
+        editor
+          .chain()
+          .focus()
+          .deleteRange(range)
+          .insertContent({ type: 'quizBlock', attrs: { lessonId: lessonId ?? null } })
+          .run()
+      },
     },
-  },
-  {
-    label: 'Homework',
-    description: 'Add a homework assignment',
-    icon: ClipboardList,
-    command: ({ editor, range }) => {
-      editor
-        .chain()
-        .focus()
-        .deleteRange(range)
-        .insertContent({ type: 'paragraph', content: [{ type: 'text', text: '📝 Homework block (coming soon)' }] })
-        .run()
+    {
+      label: 'Homework',
+      description: 'Add a homework assignment',
+      icon: ClipboardList,
+      command: ({ editor, range }) => {
+        editor
+          .chain()
+          .focus()
+          .deleteRange(range)
+          .insertContent({
+            type: 'paragraph',
+            content: [{ type: 'text', text: '📝 Homework block (coming soon)' }],
+          })
+          .run()
+      },
     },
-  },
-  {
-    label: 'Q&A Section',
-    description: 'Student discussion area',
-    icon: MessageSquare,
-    command: ({ editor, range }) => {
-      editor.chain().focus().deleteRange(range).insertContent({ type: 'qaSection' }).run()
+    {
+      label: 'Q&A Section',
+      description: 'Student discussion area',
+      icon: MessageSquare,
+      command: ({ editor, range }) => {
+        editor
+          .chain()
+          .focus()
+          .deleteRange(range)
+          .insertContent({ type: 'qaSection' })
+          .run()
+      },
     },
-  },
-]
+  ]
+}
 
 export type CommandMenuListRef = {
   onKeyDown: (event: KeyboardEvent) => boolean
@@ -161,7 +171,8 @@ export const CommandMenuList = forwardRef<CommandMenuListRef, Props>(
 
 import { ReactRenderer } from '@tiptap/react'
 
-export function buildSuggestion() {
+export function buildSuggestion(lessonId?: string) {
+  const ALL_ITEMS = buildItems(lessonId)
   return {
     items: ({ query }: { query: string }) => {
       const q = query.toLowerCase()

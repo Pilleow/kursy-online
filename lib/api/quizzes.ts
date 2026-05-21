@@ -7,8 +7,22 @@ export type QuizWithQuestions = Quiz & { questions: QuizQuestion[] }
 
 export type AttemptResult = QuizAttempt & { cooldownUntil?: string }
 
+export type QuizQuestionInput = {
+  text: string
+  type: 'multiple_choice' | 'true_false' | 'short_answer'
+  options: string[]
+  correctAnswer: string
+  position: number
+  points?: number
+}
+
 export function getQuiz(id: string): Promise<QuizWithQuestions> {
   return apiFetch(`${BASE}/quizzes/${id}`)
+}
+
+/** Create a quiz for the lesson, or return the existing one if already created. */
+export function createOrGetQuizForLesson(lessonId: string): Promise<Quiz> {
+  return apiFetch(`${BASE}/lessons/${lessonId}/quizzes`, { method: 'POST' })
 }
 
 export function createQuiz(lessonId: string, body: Partial<Quiz>): Promise<Quiz> {
@@ -20,6 +34,16 @@ export function createQuiz(lessonId: string, body: Partial<Quiz>): Promise<Quiz>
 
 export function updateQuiz(id: string, body: Partial<Quiz>): Promise<Quiz> {
   return apiFetch(`${BASE}/quizzes/${id}`, { method: 'PATCH', body: JSON.stringify(body) })
+}
+
+export function updateQuizQuestions(
+  id: string,
+  questions: QuizQuestionInput[],
+): Promise<QuizWithQuestions> {
+  return apiFetch(`${BASE}/quizzes/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ questions }),
+  })
 }
 
 export function deleteQuiz(id: string): Promise<void> {
