@@ -50,6 +50,8 @@ enum QuestionType {
 enum HomeworkQuestionType {
   text
   file_upload
+  single_choice
+  multiple_choice
 }
 
 enum SchoolRole {
@@ -338,6 +340,7 @@ model HomeworkQuestion {
   homework   Homework             @relation(fields: [homeworkId], references: [id], onDelete: Cascade)
   text       String
   type       HomeworkQuestionType
+  options    String[]
   position   Int
   required   Boolean              @default(true)
   createdAt  DateTime             @default(now())

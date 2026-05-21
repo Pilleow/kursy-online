@@ -6,7 +6,7 @@ export type HomeworkQuestion = {
   schoolId: string
   text: string
   type: HomeworkQuestionType
-  options: string[] | null
+  options: string[]
   position: number
   required: boolean
   createdAt: Date

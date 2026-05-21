@@ -69,10 +69,7 @@ function buildItems(lessonId?: string): CommandItem[] {
           .chain()
           .focus()
           .deleteRange(range)
-          .insertContent({
-            type: 'paragraph',
-            content: [{ type: 'text', text: '📝 Homework block (coming soon)' }],
-          })
+          .insertContent({ type: 'homeworkBlock', attrs: { lessonId: lessonId ?? null } })
           .run()
       },
     },

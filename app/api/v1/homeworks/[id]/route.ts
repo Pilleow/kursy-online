@@ -22,7 +22,8 @@ const UpdateHomeworkSchema = z.object({
     .array(
       z.object({
         text: z.string().min(1),
-        type: z.enum(['text', 'file_upload']),
+        type: z.enum(['text', 'file_upload', 'single_choice', 'multiple_choice']),
+        options: z.array(z.string()).optional(),
         position: z.number().int().min(0),
         required: z.boolean().default(true),
       }),
@@ -83,7 +84,15 @@ const patchHandler: TenantHandler = async (req, ctx) => {
   if (questions) {
     await tx.homeworkQuestion.deleteMany({ where: { homeworkId: id } })
     await tx.homeworkQuestion.createMany({
-      data: questions.map((q) => ({ ...q, homeworkId: id, schoolId })),
+      data: questions.map((q) => ({
+        homeworkId: id,
+        schoolId,
+        text: q.text,
+        type: q.type,
+        options: q.options ?? [],
+        position: q.position,
+        required: q.required,
+      })),
     })
   }
 

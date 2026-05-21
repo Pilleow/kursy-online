@@ -18,6 +18,10 @@ export function getHomework(id: string): Promise<HomeworkWithQuestions> {
   return apiFetch(`${BASE}/homeworks/${id}`)
 }
 
+export function createOrGetHomeworkForLesson(lessonId: string): Promise<Homework> {
+  return apiFetch(`${BASE}/lessons/${lessonId}/homeworks`, { method: 'POST' })
+}
+
 export function updateHomework(
   id: string,
   body: Partial<Homework & { questions: Partial<HomeworkQuestion>[] }>,

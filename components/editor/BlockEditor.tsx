@@ -5,12 +5,13 @@ import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import debounce from 'lodash.debounce'
-import { Save, Send, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react'
+import { Save, Send, CheckCircle2, AlertCircle, Loader2, Clock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/hooks/use-toast'
 import { QASectionNode } from './extensions/QASectionNode'
 import { VideoNode } from './extensions/VideoNode'
 import { QuizNode } from './extensions/QuizNode'
+import { HomeworkNode } from './extensions/HomeworkNode'
 import { GuardedDelete } from './extensions/GuardedDelete'
 import { SlashCommand } from './extensions/SlashCommand'
 import { buildSuggestion } from './CommandMenuList'
@@ -79,11 +80,12 @@ type Props = {
 }
 
 export function BlockEditor({ lessonId, initialBlocks, lessonStatus }: Props) {
-  const [saveStatus, setSaveStatus] = useState<SaveStatus>(
-    initialBlocks.length > 0 ? 'saved' : 'saved',
-  )
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>('saved')
+  const [localStatus, setLocalStatus] = useState(lessonStatus)
   const { toast } = useToast()
   const { mutateAsync: submitForReview, isPending: isSubmitting } = useSubmitLessonForReview()
+
+  const isPendingReview = localStatus === 'pending_review'
 
   // ─── Save logic ────────────────────────────────────────────────────────────
 
@@ -123,6 +125,7 @@ export function BlockEditor({ lessonId, initialBlocks, lessonStatus }: Props) {
       QASectionNode,
       VideoNode,
       QuizNode,
+      HomeworkNode,
       GuardedDelete,
       SlashCommand.configure({
         suggestion: buildSuggestion(lessonId),
@@ -139,6 +142,7 @@ export function BlockEditor({ lessonId, initialBlocks, lessonStatus }: Props) {
           'prose prose-sm dark:prose-invert max-w-none min-h-[400px] focus:outline-none',
       },
     },
+    editable: !isPendingReview,
     immediatelyRender: false,
   })
 
@@ -160,6 +164,12 @@ export function BlockEditor({ lessonId, initialBlocks, lessonStatus }: Props) {
     return () => window.removeEventListener('keydown', handler)
   }, [editor, debouncedSave])
 
+  // Keep editor editable flag in sync with localStatus
+  useEffect(() => {
+    if (!editor) return
+    editor.setEditable(!isPendingReview)
+  }, [editor, isPendingReview])
+
   // ─── Submit for review ─────────────────────────────────────────────────────
 
   const handleSubmit = async () => {
@@ -168,6 +178,7 @@ export function BlockEditor({ lessonId, initialBlocks, lessonStatus }: Props) {
     await save(editor.getJSON())
     try {
       await submitForReview(lessonId)
+      setLocalStatus('pending_review')
       toast({ title: 'Submitted for review' })
     } catch {
       toast({ title: 'Submission failed', variant: 'destructive' })
@@ -178,40 +189,68 @@ export function BlockEditor({ lessonId, initialBlocks, lessonStatus }: Props) {
 
   return (
     <div className="flex h-full flex-col">
+      {/* Pending review banner */}
+      {isPendingReview && (
+        <div className="flex items-center gap-2 border-b border-amber-200 bg-amber-50 px-4 py-2.5 dark:border-amber-900/40 dark:bg-amber-950/20">
+          <Clock className="h-4 w-4 shrink-0 text-amber-500" />
+          <p className="text-sm text-amber-700 dark:text-amber-400">
+            <span className="font-semibold">Pending Review</span> — this lesson is awaiting admin
+            approval. Editing is disabled until it is approved or rejected.
+          </p>
+        </div>
+      )}
+
       {/* Toolbar */}
       <div className="flex items-center justify-between border-b border-gray-100 px-4 py-2 dark:border-gray-800">
         <SaveStatusBadge status={saveStatus} />
         <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="gap-1.5 text-xs"
-            onClick={() => {
-              if (!editor) return
-              debouncedSave.cancel()
-              save(editor.getJSON())
-            }}
-            disabled={saveStatus === 'saving' || saveStatus === 'saved'}
-          >
-            <Save className="h-3.5 w-3.5" />
-            Save
-          </Button>
-          {lessonStatus === 'draft' && (
+          {!isPendingReview && (
             <Button
+              variant="ghost"
               size="sm"
               className="gap-1.5 text-xs"
+              onClick={() => {
+                if (!editor) return
+                debouncedSave.cancel()
+                save(editor.getJSON())
+              }}
+              disabled={saveStatus === 'saving' || saveStatus === 'saved'}
+            >
+              <Save className="h-3.5 w-3.5" />
+              Save
+            </Button>
+          )}
+
+          {localStatus === 'draft' && (
+            <Button
+              size="sm"
+              className="gap-1.5 bg-indigo-600 text-xs text-white hover:bg-indigo-700"
               onClick={handleSubmit}
               disabled={isSubmitting}
             >
               <Send className="h-3.5 w-3.5" />
-              {isSubmitting ? 'Submitting…' : 'Submit for review'}
+              {isSubmitting ? 'Submitting…' : 'Submit for Review'}
             </Button>
+          )}
+
+          {isPendingReview && (
+            <span className="flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+              <Clock className="h-3 w-3" />
+              Pending Review
+            </span>
           )}
         </div>
       </div>
 
       {/* Editor area */}
-      <div className="flex-1 overflow-y-auto px-6 py-4">
+      <div
+        className={[
+          'flex-1 overflow-y-auto px-6 py-4',
+          isPendingReview ? 'pointer-events-none select-none opacity-60' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+      >
         <EditorContent editor={editor} />
       </div>
     </div>
