@@ -1291,6 +1291,153 @@ async function main() {
     })
   }
 
+  // ── Homework submissions ─────────────────────────────────────────────────
+  // Enroll s1 and s2 so they show up as real students in the queue.
+
+  await db.enrollment.upsert({
+    where: { courseId_userId: { courseId: course.id, userId: s1.id } },
+    update: {},
+    create: { courseId: course.id, userId: s1.id, schoolId: school.id },
+  })
+
+  await db.enrollment.upsert({
+    where: { courseId_userId: { courseId: course.id, userId: s2.id } },
+    update: {},
+    create: { courseId: course.id, userId: s2.id, schoolId: school.id },
+  })
+
+  // ── Module 1 homework — 2 pending, 1 graded ──────────────────────────────
+
+  await db.homeworkSubmission.upsert({
+    where: { id: 'seed-sub-m1-s1' },
+    update: {},
+    create: {
+      id: 'seed-sub-m1-s1',
+      homeworkId: homework.id,
+      userId: s1.id,
+      schoolId: school.id,
+      submittedAt: new Date(Date.now() - 2 * 86_400_000), // 2 days ago
+      answers: {
+        'seed-hwq-1':
+          'A type alias is more flexible — it can represent primitives, unions, tuples, and mapped types, not just object shapes. An interface supports declaration merging, which is useful for library authors who need consumers to be able to add properties. I would choose interface for object shapes that other code might extend, and type for everything else (unions, utility types, function signatures).',
+        'seed-hwq-2':
+          'interface User {\n  id: string;\n  email: string;\n  name: string;\n  bio?: string; // optional\n}',
+        'seed-hwq-3':
+          'A payment status field: type PaymentStatus = "pending" | "completed" | "failed" | "refunded". Each status triggers different UI behaviour and the union makes invalid states unrepresentable.',
+      },
+    },
+  })
+
+  await db.homeworkSubmission.upsert({
+    where: { id: 'seed-sub-m1-s2' },
+    update: {},
+    create: {
+      id: 'seed-sub-m1-s2',
+      homeworkId: homework.id,
+      userId: s2.id,
+      schoolId: school.id,
+      submittedAt: new Date(Date.now() - 86_400_000), // 1 day ago
+      answers: {
+        'seed-hwq-1':
+          'Interfaces are for objects and can be extended or merged. Type aliases are more general — you can use them for union types, intersections, mapped types, etc. I would use type for complex combinations and interface when I want to allow extension by other teams.',
+        'seed-hwq-2':
+          'interface Product {\n  id: number;\n  title: string;\n  price: number;\n  description?: string;\n}',
+        'seed-hwq-3':
+          'An HTTP response wrapper: type Result<T> = { ok: true; data: T } | { ok: false; error: string }. The union forces the caller to check ok before accessing data.',
+      },
+    },
+  })
+
+  await db.homeworkSubmission.upsert({
+    where: { id: 'seed-sub-m1-s3' },
+    update: {},
+    create: {
+      id: 'seed-sub-m1-s3',
+      homeworkId: homework.id,
+      userId: s3.id,
+      schoolId: school.id,
+      submittedAt: new Date(Date.now() - 4 * 86_400_000), // 4 days ago — oldest, appears first
+      feedback:
+        'Excellent work, Sofia! Your distinction between interface and type alias is spot-on. The union type example for PaymentStatus is a real-world pattern used in production — great choice. The interface definition is clean; in a real project you might also add a role or createdAt field. Keep it up!',
+      feedbackAt: new Date(Date.now() - 3 * 86_400_000),
+      instructorId: instructor.id,
+      answers: {
+        'seed-hwq-1':
+          'Interfaces are great for defining the shape of objects and support merging. Type aliases can define any type including unions and intersections. I pick interface for object shapes and type when I need a union or mapped type.',
+        'seed-hwq-2':
+          'interface User {\n  id: string;\n  firstName: string;\n  lastName: string;\n  avatarUrl?: string;\n}',
+        'seed-hwq-3':
+          'A route guard result: type GuardResult = "allowed" | "redirect" | "forbidden". Makes the three possible outcomes explicit and prevents invalid returns.',
+      },
+    },
+  })
+
+  // ── Module 3 homework — 1 pending, 1 graded ──────────────────────────────
+
+  await db.homeworkSubmission.upsert({
+    where: { id: 'seed-sub-m3-s1' },
+    update: {},
+    create: {
+      id: 'seed-sub-m3-s1',
+      homeworkId: homeworkM3.id,
+      userId: s1.id,
+      schoolId: school.id,
+      submittedAt: new Date(Date.now() - 3 * 3_600_000), // 3 hours ago
+      answers: {
+        'seed-hwq-m3-1':
+          'type ApiResponse<T> =\n  | { status: "success"; data: T }\n  | { status: "error"; message: string; code: number }\n  | { status: "loading" };\n\n// Usage:\nconst r: ApiResponse<User> = { status: "success", data: user };\nif (r.status === "error") console.error(r.message);',
+        'seed-hwq-m3-2':
+          'type DeepReadonly<T> = {\n  readonly [K in keyof T]: T[K] extends object ? DeepReadonly<T[K]> : T[K];\n};\n\n// This recurses into nested objects using a conditional type.',
+        'seed-hwq-m3-3':
+          'Conditional types — specifically with infer. I use them to unwrap Promise<T> or Array<T> to get the inner type without manually specifying it everywhere.',
+      },
+    },
+  })
+
+  await db.homeworkSubmission.upsert({
+    where: { id: 'seed-sub-m3-s2' },
+    update: {},
+    create: {
+      id: 'seed-sub-m3-s2',
+      homeworkId: homeworkM3.id,
+      userId: s2.id,
+      schoolId: school.id,
+      submittedAt: new Date(Date.now() - 7 * 3_600_000), // 7 hours ago
+      feedback:
+        'Solid attempt, Sam! The discriminated union is well-structured — three variants with a clear status discriminant is exactly right. The DeepReadonly implementation is almost perfect; just note it will also recurse into arrays, which may or may not be desired. Consider adding T extends any[] as an earlier branch. Great self-reflection on conditional types with infer.',
+      feedbackAt: new Date(Date.now() - 5 * 3_600_000),
+      instructorId: instructor.id,
+      answers: {
+        'seed-hwq-m3-1':
+          'type LoadingState = { status: "loading" };\ntype SuccessState<T> = { status: "success"; payload: T };\ntype ErrorState = { status: "error"; reason: string };\ntype State<T> = LoadingState | SuccessState<T> | ErrorState;',
+        'seed-hwq-m3-2':
+          'type DeepReadonly<T> = T extends object\n  ? { readonly [K in keyof T]: DeepReadonly<T[K]> }\n  : T;',
+        'seed-hwq-m3-3':
+          'Mapped types. Being able to derive a whole new type from an existing one with a single expression saves a lot of duplication in large codebases.',
+      },
+    },
+  })
+
+  // ── Module 4 homework — 1 pending ────────────────────────────────────────
+
+  await db.homeworkSubmission.upsert({
+    where: { id: 'seed-sub-m4-s3' },
+    update: {},
+    create: {
+      id: 'seed-sub-m4-s3',
+      homeworkId: homeworkM4.id,
+      userId: s3.id,
+      schoolId: school.id,
+      submittedAt: new Date(Date.now() - 30 * 60_000), // 30 minutes ago — newest pending
+      answers: {
+        'seed-hwq-m4-1':
+          'abstract class Animal {\n  abstract speak(): string;\n  describe(): string {\n    return `I say: ${this.speak()}`;\n  }\n}\n\nclass Dog extends Animal {\n  speak() { return "Woof!"; }\n}\n\nclass Cat extends Animal {\n  speak() { return "Meow!"; }\n}\n\nconst d = new Dog();\nconsole.log(d.describe()); // "I say: Woof!"',
+        'seed-hwq-m4-2':
+          'function parse(value: string): number;\nfunction parse(value: number): string;\nfunction parse(value: string | number): string | number {\n  if (typeof value === "string") return parseFloat(value);\n  return value.toFixed(2);\n}\n\nconsole.log(parse("3.14")); // 3.14 (number)\nconsole.log(parse(42));     // "42.00" (string)',
+      },
+    },
+  })
+
   // ── Student s3: 100% completion + certificate ────────────────────────────
   // s3 is enrolled in the free course. Mark every published lesson complete
   // so the certificate generation endpoint succeeds and the UI shows the
@@ -1458,9 +1605,9 @@ Seed complete.
                 seed-quiz-m3 (${quizM3Questions.length} questions, 45 min cooldown)
                 seed-quiz-m4 (${quizM4Questions.length} questions, 30 min cooldown)
                 seed-quiz-m5 (${quizM5Questions.length} questions, 20 min cooldown)
-    Homework:   seed-homework-m1 (${homeworkQuestions.length} questions)
-                seed-homework-m3 (${homeworkM3Questions.length} questions)
-                seed-homework-m4 (${homeworkM4Questions.length} questions)
+    Homework:   seed-homework-m1 (${homeworkQuestions.length} questions)  2 pending · 1 graded
+                seed-homework-m3 (${homeworkM3Questions.length} questions)  1 pending · 1 graded
+                seed-homework-m4 (${homeworkM4Questions.length} questions)  1 pending
     Reviews:    2 pending (seed-review-1, seed-review-2)
     Q&A:        10 questions across 6 lessons (5 answered, 5 unanswered)
                   Module 1 · Primitive Types         — 1 answered

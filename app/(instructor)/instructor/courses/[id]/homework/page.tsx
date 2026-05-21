@@ -1,4 +1,4 @@
-import { HomeworkSubmissions } from '@/components/homework/HomeworkSubmissions'
+import { HomeworkQueue } from '@/components/homework/HomeworkQueue'
 
 type Props = { params: Promise<{ id: string }> }
 
@@ -13,7 +13,7 @@ export default async function InstructorHomeworkPage({ params }: Props) {
           Review student submissions and send feedback.
         </p>
       </div>
-      <HomeworkSubmissions courseId={id} />
+      <HomeworkQueue courseId={id} />
     </div>
   )
 }
