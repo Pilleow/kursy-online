@@ -16,6 +16,11 @@ import {
   listCourseReviews,
   approveReview,
   rejectReview,
+  updateCourseSettings,
+  listCourseStudents,
+  grantCourseAccess,
+  revokeCourseAccess,
+  type CourseSettingsPayload,
 } from '@/lib/api/courses'
 
 export function useCourses(schoolId: string) {
@@ -151,6 +156,44 @@ export function useRejectReview(courseId: string) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['courses', courseId, 'reviews'] })
       qc.invalidateQueries({ queryKey: ['admin', 'pending-reviews-count'] })
+    },
+  })
+}
+
+export function useUpdateCourseSettings(courseId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (body: CourseSettingsPayload) => updateCourseSettings(courseId, body),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['courses', courseId] })
+    },
+  })
+}
+
+export function useCourseStudents(courseId: string) {
+  return useQuery({
+    queryKey: ['courses', courseId, 'students'],
+    queryFn: () => listCourseStudents(courseId),
+    enabled: !!courseId,
+  })
+}
+
+export function useGrantCourseAccess(courseId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (email: string) => grantCourseAccess(courseId, email),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['courses', courseId, 'students'] })
+    },
+  })
+}
+
+export function useRevokeCourseAccess(courseId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (userId: string) => revokeCourseAccess(courseId, userId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['courses', courseId, 'students'] })
     },
   })
 }

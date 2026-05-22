@@ -123,3 +123,45 @@ export function reorderModules(_courseId: string, ids: string[]): Promise<void> 
     body: JSON.stringify({ moduleIds: ids }),
   })
 }
+
+// Settings
+
+export type CourseSettingsPayload = {
+  price: number
+  currency: string
+  accessDurationDays?: number | null
+  completionRequirements: {
+    requireAllLessons?: boolean
+    minimumQuizScore?: number | null
+  }
+}
+
+export function updateCourseSettings(id: string, body: CourseSettingsPayload): Promise<Course> {
+  return apiFetch(`${BASE}/courses/${id}/settings`, { method: 'PATCH', body: JSON.stringify(body) })
+}
+
+// Course students
+
+export type CourseStudent = {
+  userId: string
+  name: string
+  email: string
+  enrolledAt: string
+  expiresAt: string | null
+  progress: number
+}
+
+export function listCourseStudents(courseId: string): Promise<CourseStudent[]> {
+  return apiFetch(`${BASE}/courses/${courseId}/students`)
+}
+
+export function grantCourseAccess(courseId: string, email: string): Promise<unknown> {
+  return apiFetch(`${BASE}/courses/${courseId}/access`, {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  })
+}
+
+export function revokeCourseAccess(courseId: string, userId: string): Promise<void> {
+  return apiFetch(`${BASE}/courses/${courseId}/access/${userId}`, { method: 'DELETE' })
+}

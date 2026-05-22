@@ -4,6 +4,7 @@ const CompletionRequirementsSchema = z.object({
   requireQuizPass: z.boolean().optional(),
   requireHomeworkSubmit: z.boolean().optional(),
   requireAllLessons: z.boolean().optional(),
+  minimumQuizScore: z.number().min(0).max(100).nullable().optional(),
 })
 
 export const CreateCourseSchema = z.object({

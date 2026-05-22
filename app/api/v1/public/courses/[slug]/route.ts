@@ -16,7 +16,7 @@ const getHandler: TenantHandler = async (req, ctx) => {
   const slug = getSlug(req)
 
   const course = await tx.course.findFirst({
-    where: { schoolId, slug, status: 'published' },
+    where: { schoolId, slug, status: { in: ['published', 'archived'] } },
     select: {
       id: true,
       title: true,

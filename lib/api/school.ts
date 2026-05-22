@@ -3,6 +3,41 @@ import { apiFetch } from './client'
 
 const BASE = '/api/v1'
 
+// School students (enriched membership view)
+
+export type SchoolStudent = {
+  id: string
+  schoolId: string
+  userId: string
+  role: SchoolRole
+  createdAt: string
+  user: {
+    id: string
+    email: string
+    firstName: string
+    lastName: string
+    avatarUrl: string | null
+    createdAt: string
+    enrollments: Array<{ id: string; enrolledAt: string }>
+    lessonProgresses: Array<{ completedAt: string | null }>
+  }
+}
+
+export function listSchoolStudents(): Promise<SchoolStudent[]> {
+  return apiFetch(`${BASE}/school/members?role=student`)
+}
+
+export function removeSchoolMember(userId: string): Promise<void> {
+  return apiFetch(`${BASE}/school/members/${userId}`, { method: 'DELETE' })
+}
+
+export function enrollStudentInCourse(courseId: string, email: string): Promise<unknown> {
+  return apiFetch(`${BASE}/courses/${courseId}/access`, {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  })
+}
+
 // School
 
 export function getSchool(id: string): Promise<School> {

@@ -94,8 +94,11 @@ const postHandler: TenantHandler = async (req, ctx) => {
     return NextResponse.json({ error: 'Course not found' }, { status: 404 })
   }
 
+  if (course.status === 'archived') {
+    return NextResponse.json({ error: 'This course is no longer accepting new enrollments' }, { status: 422 })
+  }
   if (course.status !== 'published') {
-    return NextResponse.json({ error: 'Course is not published' }, { status: 422 })
+    return NextResponse.json({ error: 'Course is not available for enrollment' }, { status: 422 })
   }
 
   const existing = await tx.enrollment.findUnique({

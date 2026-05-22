@@ -4,6 +4,7 @@ export type CompletionRequirements = {
   requireQuizPass?: boolean
   requireHomeworkSubmit?: boolean
   requireAllLessons?: boolean
+  minimumQuizScore?: number | null
 }
 
 export type Course = {
@@ -15,6 +16,7 @@ export type Course = {
   thumbnailUrl: string | null
   status: CourseStatus
   priceUsd: number | null
+  accessDurationDays: number | null
   completionRequirements: CompletionRequirements
   createdAt: Date
   updatedAt: Date
