@@ -124,19 +124,84 @@ export function removeMember(schoolId: string, userId: string): Promise<void> {
 
 // Coupons
 
-export function listCoupons(schoolId: string): Promise<Coupon[]> {
-  return apiFetch(`${BASE}/schools/${schoolId}/coupons`)
+export type CouponWithCourse = Coupon & {
+  course: { id: string; title: string; slug: string } | null
 }
 
-export function createCoupon(schoolId: string, body: Partial<Coupon>): Promise<Coupon> {
-  return apiFetch(`${BASE}/schools/${schoolId}/coupons`, {
+export function listCoupons(): Promise<CouponWithCourse[]> {
+  return apiFetch(`${BASE}/school/coupons`)
+}
+
+export function createCoupon(body: {
+  code: string
+  discountPct: number
+  courseId?: string
+  maxUses?: number
+  expiresAt?: string
+}): Promise<CouponWithCourse> {
+  return apiFetch(`${BASE}/school/coupons`, {
     method: 'POST',
     body: JSON.stringify(body),
   })
 }
 
-export function deleteCoupon(schoolId: string, couponId: string): Promise<void> {
-  return apiFetch(`${BASE}/schools/${schoolId}/coupons/${couponId}`, { method: 'DELETE' })
+export function updateCoupon(
+  id: string,
+  body: Partial<{
+    code: string
+    discountPct: number
+    courseId: string | null
+    maxUses: number | null
+    expiresAt: string | null
+  }>,
+): Promise<CouponWithCourse> {
+  return apiFetch(`${BASE}/school/coupons/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(body),
+  })
+}
+
+export function deleteCoupon(couponId: string): Promise<void> {
+  return apiFetch(`${BASE}/school/coupons/${couponId}`, { method: 'DELETE' })
+}
+
+// Admin enrollments
+
+export type AdminEnrollment = {
+  id: string
+  courseId: string
+  userId: string
+  schoolId: string
+  couponId: string | null
+  pricePaid: string | number | null
+  enrolledAt: string
+  expiresAt: string | null
+  completedAt: string | null
+  user: { firstName: string; lastName: string; email: string }
+  course: { id: string; title: string }
+  coupon: { code: string; discountPct: number } | null
+}
+
+export type AdminEnrollmentsResponse = {
+  data: AdminEnrollment[]
+  meta: { page: number; limit: number; total: number }
+}
+
+export function listAdminEnrollments(params?: {
+  page?: number
+  limit?: number
+  courseId?: string
+  from?: string
+  to?: string
+}): Promise<AdminEnrollmentsResponse> {
+  const q = new URLSearchParams()
+  if (params?.page) q.set('page', String(params.page))
+  if (params?.limit) q.set('limit', String(params.limit))
+  if (params?.courseId) q.set('courseId', params.courseId)
+  if (params?.from) q.set('from', params.from)
+  if (params?.to) q.set('to', params.to)
+  const qs = q.toString()
+  return apiFetch(`${BASE}/admin/enrollments${qs ? `?${qs}` : ''}`)
 }
 
 // API Keys

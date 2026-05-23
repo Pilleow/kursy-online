@@ -83,17 +83,6 @@ async function getCourseDetail(slug: string) {
         },
       },
       _count: { select: { enrollments: true } },
-      coupons: {
-        where: {
-          OR: [
-            { expiresAt: null },
-            { expiresAt: { gt: new Date() } },
-          ],
-        },
-        orderBy: { discountPct: 'desc' },
-        take: 1,
-        select: { discountPct: true },
-      },
     },
   })
 
@@ -120,7 +109,6 @@ export default async function CourseDetailPage({
   const lessonCount = course.modules.reduce((sum, m) => sum + m.lessons.length, 0)
   const priceUsd = course.priceUsd !== null ? Number(course.priceUsd) : null
   const isFree = priceUsd === null || priceUsd === 0
-  const bestCouponPct = course.coupons[0]?.discountPct ?? null
 
   return (
     <div className="min-h-screen bg-background">
@@ -147,7 +135,7 @@ export default async function CourseDetailPage({
           {/* Sidebar */}
           <aside className="w-full lg:w-80 xl:w-96 flex-shrink-0 lg:sticky lg:top-24">
             <div className="rounded-xl border border-border bg-card p-6 flex flex-col gap-5 shadow-sm">
-              <PriceDisplay priceUsd={priceUsd} bestCouponPct={bestCouponPct} />
+              <PriceDisplay priceUsd={priceUsd} bestCouponPct={null} />
 
               <EnrollButton
                 courseId={course.id}

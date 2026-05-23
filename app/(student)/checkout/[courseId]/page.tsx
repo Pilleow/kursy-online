@@ -154,18 +154,24 @@ function PriceSummary({
 
 // ─── PaymentSection ───────────────────────────────────────────────────────────
 
-function PaymentSection() {
+function PaymentSection({
+  onPay,
+  paying,
+}: {
+  onPay: () => void
+  paying: boolean
+}) {
   return (
     <div className="flex flex-col gap-3">
-      {/* TODO: Replace this placeholder with actual Stripe PaymentElement.
+      {/* TODO: Replace simulated payment with Stripe checkout.
           Integration point: create a PaymentIntent server-side, pass clientSecret
           to <Elements> provider, render <PaymentElement>, and on confirm call
           POST /api/v1/enrollments with the confirmed PaymentIntent ID. */}
       <div className="rounded-lg border border-dashed border-border bg-muted/40 p-4 text-sm text-muted-foreground text-center">
         Payment processing via Stripe — integration point
       </div>
-      <Button className="w-full" disabled>
-        Pay Now
+      <Button className="w-full" onClick={onPay} disabled={paying}>
+        {paying ? 'Processing…' : 'Pay Now (simulated)'}
       </Button>
     </div>
   )
@@ -221,7 +227,7 @@ export default function CheckoutPage() {
       .catch((err: Error) => setLoadError(err.message))
   }, [accessToken, courseId, router])
 
-  async function handleFreeEnroll() {
+  async function handleEnroll(couponCode?: string) {
     if (!accessToken || !course) return
     setEnrolling(true)
     setEnrollError(null)
@@ -233,7 +239,7 @@ export default function CheckoutPage() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${accessToken}`,
         },
-        body: JSON.stringify({ courseId }),
+        body: JSON.stringify({ courseId, ...(couponCode ? { couponCode } : {}) }),
       })
 
       if (!res.ok) {
@@ -246,6 +252,17 @@ export default function CheckoutPage() {
       setEnrollError(err instanceof Error ? err.message : 'Enrollment failed')
       setEnrolling(false)
     }
+  }
+
+  function handleFreeEnroll() {
+    handleEnroll()
+  }
+
+  function handlePaidEnroll() {
+    // TODO: Stripe checkout — replace this with a real Stripe PaymentIntent confirmation
+    // before calling the enrollment API. See POST /api/v1/enrollments for the expected
+    // payment verification flow.
+    handleEnroll(coupon?.code)
   }
 
   // ─── Loading / error states ───────────────────────────────────────────────
@@ -291,11 +308,14 @@ export default function CheckoutPage() {
             )}
           </div>
         ) : (
-          // Paid course — coupon + price summary + payment placeholder
+          // Paid course — coupon + price summary + payment (simulated)
           <>
             <CouponInput onApply={setCoupon} />
             <PriceSummary priceUsd={priceUsd} coupon={coupon} />
-            <PaymentSection />
+            <PaymentSection onPay={handlePaidEnroll} paying={enrolling} />
+            {enrollError && (
+              <p className="text-sm text-destructive text-center">{enrollError}</p>
+            )}
           </>
         )}
       </div>
