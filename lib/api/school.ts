@@ -20,6 +20,7 @@ export type SchoolStudent = {
     createdAt: string
     enrollments: Array<{ id: string; enrolledAt: string }>
     lessonProgresses: Array<{ completedAt: string | null }>
+    moduleAssignments: Array<{ moduleId: string }>
   }
 }
 
@@ -29,6 +30,48 @@ export function listSchoolStudents(): Promise<SchoolStudent[]> {
 
 export function removeSchoolMember(userId: string): Promise<void> {
   return apiFetch(`${BASE}/school/members/${userId}`, { method: 'DELETE' })
+}
+
+// School instructors (enriched membership view)
+
+export type SchoolInstructor = {
+  id: string
+  schoolId: string
+  userId: string
+  role: SchoolRole
+  createdAt: string
+  user: {
+    id: string
+    email: string
+    firstName: string
+    lastName: string
+    avatarUrl: string | null
+    createdAt: string
+    enrollments: Array<{ id: string; enrolledAt: string }>
+    lessonProgresses: Array<{ completedAt: string | null }>
+    moduleAssignments: Array<{ moduleId: string }>
+  }
+}
+
+export function listSchoolInstructors(): Promise<SchoolInstructor[]> {
+  return apiFetch(`${BASE}/school/members?role=instructor`)
+}
+
+export function removeInstructor(userId: string): Promise<void> {
+  return apiFetch(`${BASE}/school/members/${userId}`, { method: 'DELETE' })
+}
+
+export type InviteInstructorResponse = {
+  status: 'invited' | 'promoted' | 'added'
+  message?: string
+  member?: unknown
+}
+
+export function inviteInstructor(email: string): Promise<InviteInstructorResponse> {
+  return apiFetch(`${BASE}/school/members/invite`, {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  })
 }
 
 export function enrollStudentInCourse(courseId: string, email: string): Promise<unknown> {

@@ -1,19 +1,34 @@
+'use client'
+
+import { useState } from 'react'
+import { UserPlus } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { InstructorsTable } from '@/components/curriculum/InstructorsTable'
+import { InviteInstructorModal } from '@/components/curriculum/InviteInstructorModal'
+import { useSchoolInstructors } from '@/lib/hooks/useSchoolInstructors'
+
 export default function AdminInstructorsPage() {
+  const { data: instructors, isLoading } = useSchoolInstructors()
+  const [inviteOpen, setInviteOpen] = useState(false)
+
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-50">Instructors</h1>
-          <p className="mt-1 text-sm text-gray-500">Manage instructor team members.</p>
+          <p className="mt-1 text-sm text-gray-500">
+            Manage instructor team members and their module assignments.
+          </p>
         </div>
-        <button className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
+        <Button size="sm" onClick={() => setInviteOpen(true)}>
+          <UserPlus className="mr-1.5 h-4 w-4" />
           Invite instructor
-        </button>
+        </Button>
       </div>
 
-      <div className="rounded-lg border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
-        <div className="px-4 py-10 text-center text-sm text-gray-400">No instructors yet.</div>
-      </div>
+      <InstructorsTable instructors={instructors} isLoading={isLoading} />
+
+      <InviteInstructorModal open={inviteOpen} onClose={() => setInviteOpen(false)} />
     </div>
   )
 }

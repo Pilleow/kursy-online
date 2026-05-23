@@ -165,3 +165,12 @@ export function grantCourseAccess(courseId: string, email: string): Promise<unkn
 export function revokeCourseAccess(courseId: string, userId: string): Promise<void> {
   return apiFetch(`${BASE}/courses/${courseId}/access/${userId}`, { method: 'DELETE' })
 }
+
+// Module instructor assignment
+
+export function replaceModuleInstructors(moduleId: string, instructorIds: string[]): Promise<void> {
+  return apiFetch(`${BASE}/modules/${moduleId}/instructors`, {
+    method: 'PATCH',
+    body: JSON.stringify({ instructorIds }),
+  })
+}

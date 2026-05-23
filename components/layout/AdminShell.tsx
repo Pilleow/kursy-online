@@ -3,6 +3,8 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { signOut } from 'next-auth/react'
+import { useQueryClient } from '@tanstack/react-query'
+import { useAuthStore } from '@/lib/store/authStore'
 import {
   LayoutDashboard,
   BookOpen,
@@ -60,9 +62,13 @@ function NavLink({ item }: { item: NavItem }) {
 
 export function AdminShell({ user, children }: { user: ShellUser; children: ReactNode }) {
   const router = useRouter()
+  const queryClient = useQueryClient()
+  const clearAuth = useAuthStore((s) => s.clearAuth)
   const [paletteOpen, setPaletteOpen] = useState(false)
 
   async function handleLogout() {
+    clearAuth()
+    queryClient.clear()
     await signOut({ redirect: false })
     router.push('/login')
   }
@@ -116,13 +122,15 @@ export function AdminShell({ user, children }: { user: ShellUser; children: Reac
         <aside className="flex w-60 shrink-0 flex-col border-r border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-950">
           {/* Logo */}
           <div className="flex h-12 items-center gap-2.5 border-b border-gray-100 dark:border-gray-800 px-4">
-            <div className="flex h-6 w-6 items-center justify-center rounded bg-[#012c4f] text-white text-xs font-bold shrink-0">
-              N
-            </div>
-            <span className="text-sm font-semibold tracking-tight text-gray-900 dark:text-gray-50 truncate">
-              NGV
-            </span>
-            <span className="ml-auto text-[10px] font-medium text-gray-400 uppercase tracking-wide">
+            <Link href="/dashboard" className="flex items-center gap-2.5 min-w-0">
+              <div className="flex h-6 w-6 items-center justify-center rounded bg-[#012c4f] text-white text-xs font-bold shrink-0">
+                N
+              </div>
+              <span className="text-sm font-semibold tracking-tight text-gray-900 dark:text-gray-50 truncate">
+                NGV
+              </span>
+            </Link>
+            <span className="ml-auto text-[10px] font-medium text-gray-400 uppercase tracking-wide shrink-0">
               Admin
             </span>
           </div>

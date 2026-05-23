@@ -25,6 +25,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useAuthStore } from '@/lib/store/authStore';
+import { useQueryClient } from '@tanstack/react-query';
 import type { SchoolRole } from '@/lib/types/user';
 
 const RegisterSchema = z.object({
@@ -47,6 +48,7 @@ function roleToPath(role: string | null, isSystemAdmin: boolean): string {
 export default function RegisterPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const setAuth = useAuthStore((s) => s.setAuth);
 
   const form = useForm<RegisterValues>({
@@ -92,6 +94,7 @@ export default function RegisterPage() {
         return;
       }
 
+      queryClient.clear();
       setAuth(loginData.user, loginData.accessToken, loginData.user.schoolId ?? null, loginData.user.role as SchoolRole | null);
 
       router.push(roleToPath(loginData.user.role, loginData.user.isSystemAdmin ?? false));

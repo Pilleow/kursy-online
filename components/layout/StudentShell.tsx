@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { signOut } from 'next-auth/react'
 import { LogOut, User } from 'lucide-react'
 import { useEffect } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,8 +31,12 @@ type StudentShellProps = {
 
 export function StudentShell({ user, breadcrumb, children }: StudentShellProps) {
   const router = useRouter()
+  const queryClient = useQueryClient()
   const accessToken = useAuthStore((s) => s.accessToken)
+  const role = useAuthStore((s) => s.role)
+  const isSystemAdmin = useAuthStore((s) => s.isSystemAdmin)
   const setAuth = useAuthStore((s) => s.setAuth)
+  const clearAuth = useAuthStore((s) => s.clearAuth)
 
   useEffect(() => {
     if (accessToken) return
@@ -58,6 +63,8 @@ export function StudentShell({ user, breadcrumb, children }: StudentShellProps) 
   }, [accessToken, setAuth])
 
   async function handleLogout() {
+    clearAuth()
+    queryClient.clear()
     await signOut({ redirect: false })
     router.push('/login')
   }
@@ -102,6 +109,30 @@ export function StudentShell({ user, breadcrumb, children }: StudentShellProps) 
             >
               Dashboard
             </Link>
+            {isSystemAdmin && (
+              <Link
+                href="/system/schools"
+                className="text-sm font-medium px-3 py-1.5 rounded-md text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors"
+              >
+                System
+              </Link>
+            )}
+            {!isSystemAdmin && role === 'school_admin' && (
+              <Link
+                href="/admin/dashboard"
+                className="text-sm font-medium px-3 py-1.5 rounded-md text-blue-600 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+              >
+                Admin panel
+              </Link>
+            )}
+            {!isSystemAdmin && role === 'instructor' && (
+              <Link
+                href="/instructor/dashboard"
+                className="text-sm font-medium px-3 py-1.5 rounded-md text-blue-600 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+              >
+                Instructor panel
+              </Link>
+            )}
           </nav>
 
           <DropdownMenu>

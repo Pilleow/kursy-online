@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/lib/store/authStore'
+import { useQueryClient } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 
 type ShellUser = {
@@ -55,6 +56,7 @@ const navItems: NavItem[] = [
 
 export function SystemShell({ user, children }: { user: ShellUser; children: ReactNode }) {
   const clearAuth = useAuthStore((s) => s.clearAuth)
+  const queryClient = useQueryClient()
 
   const initials = user.name
     .split(' ')
@@ -64,8 +66,9 @@ export function SystemShell({ user, children }: { user: ShellUser; children: Rea
     .slice(0, 2)
 
   async function handleLogout() {
-    await fetch('/api/v1/auth/logout', { method: 'POST' })
     clearAuth()
+    queryClient.clear()
+    await fetch('/api/v1/auth/logout', { method: 'POST' })
     window.location.href = '/system/login'
   }
 
@@ -75,9 +78,11 @@ export function SystemShell({ user, children }: { user: ShellUser; children: Rea
       <aside className="flex w-56 shrink-0 flex-col border-r border-gray-800">
         {/* Logo */}
         <div className="flex h-12 items-center gap-2.5 border-b border-gray-800 px-4">
-          <Shield className="h-5 w-5 text-red-400 shrink-0" />
-          <span className="text-sm font-semibold tracking-tight truncate">NGV</span>
-          <span className="ml-auto text-[10px] font-medium text-red-400 uppercase tracking-wide">
+          <Link href="/system/schools" className="flex items-center gap-2.5 min-w-0">
+            <Shield className="h-5 w-5 text-red-400 shrink-0" />
+            <span className="text-sm font-semibold tracking-tight truncate">NGV</span>
+          </Link>
+          <span className="ml-auto text-[10px] font-medium text-red-400 uppercase tracking-wide shrink-0">
             System
           </span>
         </div>

@@ -13,6 +13,8 @@ import {
   LogOut,
 } from 'lucide-react'
 import { useMemo, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import { useAuthStore } from '@/lib/store/authStore'
 import type { ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 import { useInstructorAssignments, useInstructorStats } from '@/lib/hooks/useInstructorStats'
@@ -79,6 +81,8 @@ function AttentionBadge({ count, color }: { count: number; color: 'orange' | 'bl
 
 export function InstructorShell({ user, children }: { user: ShellUser; children: ReactNode }) {
   const router = useRouter()
+  const queryClient = useQueryClient()
+  const clearAuth = useAuthStore((s) => s.clearAuth)
   const { data: assignments = [] } = useInstructorAssignments()
   const { data: stats } = useInstructorStats()
 
@@ -109,6 +113,8 @@ export function InstructorShell({ user, children }: { user: ShellUser; children:
   }
 
   async function handleLogout() {
+    clearAuth()
+    queryClient.clear()
     await signOut({ redirect: false })
     router.push('/login')
   }
@@ -128,13 +134,15 @@ export function InstructorShell({ user, children }: { user: ShellUser; children:
       <aside className="flex w-60 shrink-0 flex-col border-r border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-950">
         {/* Logo */}
         <div className="flex h-12 items-center gap-2.5 border-b border-gray-100 dark:border-gray-800 px-4">
-          <div className="flex h-6 w-6 items-center justify-center rounded bg-[#012c4f] text-white text-xs font-bold shrink-0">
-            N
-          </div>
-          <span className="text-sm font-semibold tracking-tight text-gray-900 dark:text-gray-50 truncate">
-            NGV
-          </span>
-          <span className="ml-auto text-[10px] font-medium text-gray-400 uppercase tracking-wide">
+          <Link href="/dashboard" className="flex items-center gap-2.5 min-w-0">
+            <div className="flex h-6 w-6 items-center justify-center rounded bg-[#012c4f] text-white text-xs font-bold shrink-0">
+              N
+            </div>
+            <span className="text-sm font-semibold tracking-tight text-gray-900 dark:text-gray-50 truncate">
+              NGV
+            </span>
+          </Link>
+          <span className="ml-auto text-[10px] font-medium text-gray-400 uppercase tracking-wide shrink-0">
             Instructor
           </span>
         </div>

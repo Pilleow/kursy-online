@@ -33,6 +33,10 @@ const getHandler: TenantHandler = async (req: NextRequest, ctx) => {
             orderBy: { completedAt: 'desc' },
             take: 1,
           },
+          moduleAssignments: {
+            where: { schoolId },
+            select: { moduleId: true },
+          },
         },
       },
     },
