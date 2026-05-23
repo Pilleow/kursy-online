@@ -24,11 +24,6 @@ Serwer musi przyjąć żądanie, dodać zadanie do kolejki i zwrócić ID zadani
 - Brak dodatkowej infrastruktury - PostgreSQL jest wymagany przez aplikację.
 - Regularne odpytywanie tabeli generuje niepotrzebne obciążenie DB przy wzroście liczby zadań.
 
-### Inngest
-- Zarządzana platforma event-driven, brak infrastruktury do zarządzania.
-- Ładunki zadań trafiają do zewnętrznej usługi - brak 100% kontroli nad danymi.
-- Aplikacja nie może działać w pełni z `docker-compose` offline.
-
 ### Worker Threads Node.js
 - Brak zewnętrznych zależności.
 - Zadania nie są utrwalane, restart procesu traci wszystkie zadania w toku.
@@ -37,7 +32,7 @@ Serwer musi przyjąć żądanie, dodać zadanie do kolejki i zwrócić ID zadani
 
 ## Uzasadnienie
 
-- Generowanie PDF i transkodowanie wideo wymagają trwałości zadań i automatycznych prób - Worker Threads ani tabela DB tego nie zapewniają.
+- Generowanie PDF i transkodowanie wideo wymagają trwałości zadań i automatycznych prób.
 - Redis jest już planowany do zarządzania tokenami JWT - BullMQ nie dodaje nowej infrastruktury.
 - Wzorzec polling (`GET /jobs/:jobId`) jest wystarczający dla czasów zadań rzędu sekund.
 - BullMQ automatycznie ponawia nieudane zadania z wykładniczym backoffem.

@@ -2,7 +2,7 @@
 
 ## Kontekst
 
-Projekt wymaga REST API używanego przez własny frontend Next.js oraz przez zewnętrzne systemy (klucze API). Decyzja dotyczy tego, czy API jest częścią projektu Next.js, czy osobnym serwisem.
+Projekt wymaga REST API używanego przez własny frontend Next.js oraz przez zewnętrzne systemy (klucze API). 
 
 ---
 

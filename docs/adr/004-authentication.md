@@ -34,4 +34,4 @@ Aplikacja ma cztery role użytkowników. Uwierzytelnianie musi działać dla ses
 
 - Więcej kodu do utrzymania niż przy bibliotece.
 - Logika odświeżania tokenu musi być zaimplementowana po stronie klienta; błąd w niej powoduje niespodziewane wylogowania.
-- Lista zablokowanych JTI rośnie - wymaga zadania czyszczącego w tle.
+- Lista zablokowanych JTI rośnie - wymaga zadania czyszczącego w tle (rozwiązanie: TTL Redisa).

@@ -10,7 +10,7 @@ Każdy endpoint API musi walidować dane wejściowe. Formularze na frontendzie p
 
 ## Decyzja
 
-**Zod** - schematy definiowane raz, importowane przez backend i frontend. Typy TypeScript wyprowadzane z `z.infer<>`.
+**Zod** - schematy definiowane raz, importowane przez backend i frontend. Typy TypeScript wyprowadzane z schematu.
 
 ---
 

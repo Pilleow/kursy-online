@@ -48,4 +48,3 @@ oraz dane o zmiennej strukturze. Wielodostępność wymaga izolacji danych międ
 ## Trade-offy
 
 - Prisma nie obsługuje RLS natywnie, polityki bezpieczeństwa muszą być pisane w surowym SQL w plikach migracji.
-- Klient Prisma generuje duży bundle.

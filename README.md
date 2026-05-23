@@ -1,36 +1,87 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# EduFlow
 
-## Getting Started
+Platforma SaaS do sprzedaży i prowadzenia kursów online.  
+Każda szkoła działa w izolowanej przestrzeni i zarządza własnymi instruktorami, kursami, studentami oraz certyfikatami.
 
-First, run the development server:
+**Projekt zaliczeniowy - Projektowanie Aplikacji Internetowych**  
+Uniwersytet Jagielloński, Wydział Fizyki, Astronomii i Informatyki Stosowanej 2025/2026
+
+---
+
+## Uruchomienie
+
+Docker Compose uruchamia automatycznie aplikację Next.js, workera BullMQ, PostgreSQL, Redis oraz MinIO. Przy pierwszym starcie MinIO-init tworzy bucket i wgrywa przykładowy certyfikat seed.
 
 ```bash
+# 1. Uruchom infrastrukturę
+docker compose up db redis minio minio-init
+
+# 2. Skopiuj zmienne środowiskowe
+cp .env.example .env
+
+# 3. Zainstaluj zależności i uruchom migracje
+npm install
+npx prisma migrate dev
+
+# 4. Załaduj dane seed
+npx prisma db seed
+
+# 5. Serwer deweloperski
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+
+# 6. Worker BullMQ na osobnym terminalu
+npm run worker
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Architektura
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Stos technologiczny
 
-## Learn More
+| Warstwa         | Technologia                              | Uzasadnienie                                                                                              |
+|-----------------|------------------------------------------|-----------------------------------------------------------------------------------------------------------|
+| Język           | TypeScript (Node.js)                     | Jeden język dla backendu i frontendu typy współdzielone bez generowania kodu                              |
+| Frontend / SSR  | Next.js 14, App Router, React, Tailwind CSS | Incremental static regeneration dla publicznych stron kursów (SEO), Server Components dla zapytań bez HTTP |
+| REST API        | Next.js Route Handlers                   | Monorepo, brak duplikacji typów                                                      |
+| Baza danych     | PostgreSQL 16 + Prisma ORM               | Row-Level Security dla izolacji szkół, migracje                                                           |
+| Uwierzytelnianie | Własne JSON Web Token + blocklist        | Niestandardowy payload {`userId`, `schoolId`, `role`, `jti`}, natychmiastowe wylogowanie przez JTI blocklist |
+| Cache           | Redis                                    | JTI blocklist + metadane kolejki BullMQ                                                                   |
+| Kolejka zadań   | BullMQ na Redis                          | Generowanie certyfikatów PDF, przetwarzanie wideo, powiadomienia e-mail, duplikacja kursów                |
+| Walidacja       | Zod                                      | Schematy definiowane raz, importowane przez backend i frontend, wyprowadzanie typów TypeScript            |
+| Pliki           | MinIO (dev) / AWS S3 (prod)              | Upload bezpośrednio z przeglądarki przez presigned URL, serwer nie jest w ścieżce uploadu                 |
+| Multi-tenancy   | Izolacja w DB                            | Każda szkoła widzi tylko swoje zasoby (kursy, instruktorów, studentów, certyfikaty itd.)                  |
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Decyzje architektoniczne ADR
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Pełna dokumentacja w [`docs/adr/`](docs/adr/) - 8 wpisów.
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Spełnienie wymagań
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Wymagania obowiązkowe (R1–R6)
+
+| ID | Wymaganie | Status | Realizacja                                         |
+|---|---|---|----------------------------------------------------|
+| R1 | Backend API | ✅ | REST API                                           |
+| R2 | Baza danych | ✅ | PostgreSQL + Prisma, migracje w `prisma/migrations/` |
+| R3 | Frontend | ✅ | Next.js 14 App Router                              |
+| R4 | Autentykacja | ✅ | JWT (access+refresh) + API keys                    |
+| R5 | Konteneryzacja | ✅ | `docker compose up --build` uruchamia cały stack   |
+| R6 | Repozytorium | ✅ | Publiczne repo, historia commitów, ten README      |
+
+### Elementy dodatkowe
+
+| Element | Realizacja                                              |
+|---|---------------------------------------------------------|
+| **Cache** | Redis                                                   |
+| **Task queue** | BullMQ                                                  |
+| **Walidacja danych** | Zod                                                     |
+| **Multi-tenancy** | PostgreSQL RLS + middleware                             |
+| **Seed data** | `prisma/seed.ts`, użycie: `npx prisma db seed`          |
+| **Health check** | `GET /api/health`, używany w docker-compose healthcheck |
+
+---
