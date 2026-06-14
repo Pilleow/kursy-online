@@ -11,11 +11,16 @@ export const revalidate = 60
 // ─── ISR: pre-render all published course slugs at build time ─────────────────
 
 export async function generateStaticParams() {
-  const courses = await db.course.findMany({
-    where: { status: 'published' },
-    select: { slug: true },
-  })
-  return courses.map((c) => ({ slug: c.slug }))
+  try {
+    const courses = await db.course.findMany({
+      where: { status: 'published' },
+      select: { slug: true },
+    })
+    return courses.map((c) => ({ slug: c.slug }))
+  } catch {
+    // DB not available at build time (e.g. docker build) — ISR generates pages at runtime
+    return []
+  }
 }
 
 // ─── SEO metadata ─────────────────────────────────────────────────────────────

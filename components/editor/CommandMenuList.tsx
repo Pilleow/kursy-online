@@ -195,6 +195,7 @@ export function buildSuggestion(lessonId?: string) {
 
           renderer = new ReactRenderer(CommandMenuList, {
             props: { items: props.items, command: props.command },
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             editor: (props as any).editor,
           })
           floatingEl.appendChild(renderer.element)

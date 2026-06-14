@@ -10,28 +10,50 @@ Uniwersytet Jagielloński, Wydział Fizyki, Astronomii i Informatyki Stosowanej 
 
 ## Uruchomienie
 
-Docker Compose uruchamia automatycznie aplikację Next.js, workera BullMQ, PostgreSQL, Redis oraz MinIO. Przy pierwszym starcie MinIO-init tworzy bucket i wgrywa przykładowy certyfikat seed.
+### Zalecany sposób (infrastruktura Docker + aplikacja lokalnie)
+
+Aplikacja Next.js i worker BullMQ uruchamiane są lokalnie (hot reload), a infrastruktura (PostgreSQL, Redis, MinIO) w kontenerach.
 
 ```bash
-# 1. Uruchom infrastrukturę
-docker compose up db redis minio minio-init
+# 1. Uruchom infrastrukturę + migracje + seed
+docker compose up db redis minio minio-init db-init
 
 # 2. Skopiuj zmienne środowiskowe
 cp .env.example .env
 
-# 3. Zainstaluj zależności i uruchom migracje
+# 3. Zainstaluj zależności
 npm install
-npx prisma migrate dev
 
-# 4. Załaduj dane seed
-npx prisma db seed
-
-# 5. Serwer deweloperski
+# 4. Terminal 1 — serwer deweloperski Next.js
 npm run dev
 
-# 6. Worker BullMQ na osobnym terminalu
+# 5. Terminal 2 — worker BullMQ
 npm run worker
 ```
+
+| Serwis | Adres |
+|---|---|
+| Aplikacja | http://localhost:3000 |
+| MinIO Console | http://localhost:9001 |
+
+### Dane testowe (seed)
+
+Po uruchomieniu dostępne są następujące konta:
+
+| Rola | Email | Hasło | URL logowania |
+|---|---|---|---|
+| System Admin | `sysadmin@ngv.dev` | `changeme` | `/system/login` |
+| School Admin | `a@e.com` | `password123` | `/login` |
+| Instructor | `i@e.com` | `password123` | `/login` |
+| Student | `s1@e.com`, `s2@e.com`, `s3@e.com` | `password123` | `/login` |
+
+### Pełny Docker Compose (bez hot reload)
+
+```bash
+docker compose up --build
+```
+
+Uruchamia cały stack włącznie z aplikacją i workerem jako kontenery produkcyjne. Migracje i seed są ładowane automatycznie.
 
 ---
 
@@ -70,7 +92,7 @@ Pełna dokumentacja w [`docs/adr/`](docs/adr/) - 8 wpisów.
 | R2 | Baza danych | ✅ | PostgreSQL + Prisma, migracje w `prisma/migrations/` |
 | R3 | Frontend | ✅ | Next.js 14 App Router                              |
 | R4 | Autentykacja | ✅ | JWT (access+refresh) + API keys                    |
-| R5 | Konteneryzacja | ✅ | `docker compose up --build` uruchamia cały stack   |
+| R5 | Konteneryzacja | ✅ | Docker Compose dla infrastruktury; `docker compose up --build` uruchamia pełny stack |
 | R6 | Repozytorium | ✅ | Publiczne repo, historia commitów, ten README      |
 
 ### Elementy dodatkowe

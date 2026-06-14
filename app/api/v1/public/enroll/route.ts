@@ -26,7 +26,7 @@ const postHandler: TenantHandler = async (req, ctx) => {
     )
   }
 
-  const { email, courseId, externalPaymentRef } = parsed.data
+  const { email, courseId } = parsed.data
 
   const course = await tx.course.findFirst({
     where: { id: courseId, schoolId, status: 'published' },

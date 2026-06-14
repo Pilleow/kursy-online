@@ -4,7 +4,7 @@ import { useCallback, useState } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { NodeViewWrapper } from '@tiptap/react'
 import type { NodeViewProps } from '@tiptap/react'
-import { Loader2, UploadCloud, Video } from 'lucide-react'
+import { Loader2, UploadCloud } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useJob } from '@/lib/hooks/useJob'
 import {
@@ -126,7 +126,7 @@ function ReadyState({ url, thumbnail }: { url: string; thumbnail?: string }) {
 // ─── VideoBlock NodeView ────────────────────────────────────────────────────────
 
 export function VideoBlock({ node, updateAttributes, deleteNode }: NodeViewProps) {
-  const { uploadId, status, videoUrl, thumbnail } = node.attrs as {
+  const { status, videoUrl, thumbnail } = node.attrs as {
     uploadId: string | null
     status: UploadPhase
     videoUrl: string | null

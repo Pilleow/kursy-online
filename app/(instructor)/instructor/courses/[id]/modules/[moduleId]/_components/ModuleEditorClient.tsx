@@ -285,7 +285,7 @@ type Props = {
   selectedLessonId?: string
 }
 
-export function ModuleEditorClient({ courseId, moduleId, selectedLessonId }: Props) {
+export function ModuleEditorClient({ moduleId, selectedLessonId }: Props) {
   const { data, isLoading } = useLessons(moduleId)
   const [lessons, setLessons] = useState<Lesson[]>([])
   const [addOpen, setAddOpen] = useState(false)

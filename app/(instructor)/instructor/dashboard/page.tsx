@@ -16,7 +16,6 @@ import type { AssignedModule, PendingSubmission } from '@/lib/api/instructor'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
 
 // ─── Module card ──────────────────────────────────────────────────────────────
 

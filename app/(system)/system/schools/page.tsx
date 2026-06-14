@@ -1,6 +1,16 @@
 import { Building2 } from 'lucide-react'
+import { db } from '@/lib/server/db'
+import { SchoolsTable } from './_components/SchoolsTable'
 
-export default function SystemSchoolsPage() {
+export default async function SystemSchoolsPage() {
+  const schools = await db.school.findMany({
+    include: {
+      plan: true,
+      _count: { select: { courses: true, memberships: true } },
+    },
+    orderBy: { createdAt: 'desc' },
+  })
+
   return (
     <div className="max-w-5xl">
       <div className="mb-8">
@@ -9,14 +19,11 @@ export default function SystemSchoolsPage() {
           Schools
         </h1>
         <p className="mt-1 text-sm text-gray-400">
-          Manage all tenant schools across the platform.
+          {schools.length} tenant school{schools.length !== 1 ? 's' : ''} registered on the platform.
         </p>
       </div>
 
-      <div className="rounded-lg border border-gray-800 bg-gray-900 p-12 text-center">
-        <Building2 className="mx-auto h-10 w-10 text-gray-700 mb-4" />
-        <p className="text-gray-500 text-sm">Schools management — coming soon.</p>
-      </div>
+      <SchoolsTable schools={schools} />
     </div>
   )
 }

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useForm, Controller } from 'react-hook-form'
+import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { UserPlus, Trash2 } from 'lucide-react'
@@ -37,7 +37,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Input } from '@/components/ui/input'
 import { useSchoolStudents, useRemoveSchoolMember, useEnrollStudentInCourse } from '@/lib/hooks/useSchoolStudents'
 import { useCourses } from '@/lib/hooks/useCourses'
 import { useAuthStore } from '@/lib/store/authStore'

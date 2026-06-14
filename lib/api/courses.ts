@@ -1,4 +1,4 @@
-import type { Course, Module, Lesson, Block, LessonType, CompletionRequirements } from '@/lib/types'
+import type { Course, Module, Lesson, Block, LessonType } from '@/lib/types'
 import { apiFetch } from './client'
 
 export type LessonSummary = {
