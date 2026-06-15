@@ -16,7 +16,7 @@ Potrzebujemy frameworka rozwiązującego routing, renderowanie po stronie serwer
 
 ### Remix
 - Zbudowany na React, dobre wsparcie dla zagnieżdżonych layoutów i formularzy.
-- Brak ISR, każda strona renderowana przy każdym żądaniu, co jest kosztowne dla stron kursów z dużym ruchem.
+- Brak wbudowanego ISR niezależnego od infrastruktury: cache opiera się na nagłówkach HTTP i wymaga zewnętrznego CDN. W środowisku Docker Compose na pojedynczym węźle nie ma warstwy CDN, która obsłużyłaby to cache'owanie - każde żądanie trafia do serwera.
 - Mniejszy ekosystem i mniejsza społeczność niż Next.js.
 
 ### Czysta aplikacja React + Express

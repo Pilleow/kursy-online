@@ -39,7 +39,7 @@ oraz dane o zmiennej strukturze. Wielodostępność wymaga izolacji danych międ
 
 ## Uzasadnienie
 
-- PostgreSQL jako jedyna popularna baza obsługuje Row-Level Security.
+- PostgreSQL jako jedyna popularna baza open-source dostępna w standardowych stackach webowych obsługuje Row-Level Security (MySQL i MariaDB nadal jej nie mają natywnie; SQL Server i Oracle posiadają odpowiedniki, ale nie są częścią open-source'owego stosu TypeScript).
 - Prisma generuje typy TypeScript ze schematu automatycznie.
 - `prisma migrate dev` generuje SQL migracji i zaktualizowany klient TypeScript jedną komendą.
 

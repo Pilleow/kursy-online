@@ -21,8 +21,8 @@ Projekt wymaga REST API używanego przez własny frontend Next.js oraz przez zew
 
 ### tRPC
 - End-to-end type safety bez generowania kodu, świetny DX w TypeScript.
-- Nie obsługuje REST, zewnętrzne systemy integrujące się przez HTTP nie mogą go używać.
-- Wymaganie publicznego API z kluczami dostępu wyklucza to rozwiązanie.
+- tRPC używa standardowego HTTP (GET/POST) jako warstwy transportowej. Adapter `trpc-openapi` umożliwia eksponowanie sub-routerów i generowanie schematu OpenAPI. Jednak domyślnie tRPC nie udostępnia standardowego interfejsu REST; obsługa zewnętrznych systemów wymaga dodatkowej warstwy adapterowej, która musi być utrzymywana równolegle z głównym routerem i wprowadza dodatkowy narzut konfiguracyjny.
+- Projekt wymaga publicznego API jako wymagania pierwszej klasy. Natywne Route Handlers udostępniają REST bezpośrednio, bez warstwy translacji.
 
 ---
 

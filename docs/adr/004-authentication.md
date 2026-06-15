@@ -16,7 +16,8 @@ Aplikacja ma cztery role użytkowników. Uwierzytelnianie musi działać dla ses
 
 ### NextAuth.js (Auth.js)
 - Najpopularniejsza biblioteka auth dla Next.js, obsługuje OAuth i sesje JWT.
-- Dodanie `schoolId`, `role`, `jti` w payloadzie wymaga walki z konwencjami biblioteki.
+- Rozszerzenie payloadu o `schoolId` i `role` jest w NextAuth v5 obsługiwane natywnie.
+- Natychmiastowa odwołalność tokenu przez listę zablokowanych JTI w Redis wymaga sprawdzenia Redis przy każdym uwierzytelnionym żądaniu, co dodaje warstwę pośrednią nieobecną w implementacji własnej.
 
 ---
 
@@ -27,6 +28,7 @@ Aplikacja ma cztery role użytkowników. Uwierzytelnianie musi działać dla ses
 - Payload JWT zawiera cały kontekst (`userId`, `schoolId`, `role`) - każde żądanie autentykowane bez zapytania do DB.
 - Cookie HTTP-only dla refresh tokena chroni przed XSS.
 - Wylogowanie jest natychmiastowe - JTI trafia na listę zablokowanych w Redis.
+- Własna implementacja zachowuje pełną kontrolę nad przepływem odwołania bez narzutu konwencji biblioteki.
 
 ---
 

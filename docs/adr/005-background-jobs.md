@@ -26,7 +26,8 @@ Serwer musi przyjąć żądanie, dodać zadanie do kolejki i zwrócić ID zadani
 
 ### Worker Threads Node.js
 - Brak zewnętrznych zależności.
-- Zadania nie są utrwalane, restart procesu traci wszystkie zadania w toku.
+- Worker Threads działają w tej samej przestrzeni adresowej procesu co serwer Next.js. 
+- Nieobsłużony wyjątek, wyciek pamięci lub awaria natywnego narzędzia (Puppeteer, ffmpeg) może zakończyć cały kontener aplikacji.
 
 ---
 
@@ -44,3 +45,4 @@ Serwer musi przyjąć żądanie, dodać zadanie do kolejki i zwrócić ID zadani
 
 - Stack wymaga dwóch uruchomionych procesów: serwer Next.js i worker.
 - Docker Compose staje się bardziej złożony; dwa serwisy współdzielą połączenia do Redis i DB.
+- Trwałość zadań można by osiągnąć przez podparcie kolejki bazą danych, ale wymagałoby to zbudowania od podstaw mechanizmów ponawiania, monitorowania i backoff'u, które BullMQ dostarcza natywnie.

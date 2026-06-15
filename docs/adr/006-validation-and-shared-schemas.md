@@ -17,7 +17,7 @@ Każdy endpoint API musi walidować dane wejściowe. Formularze na frontendzie p
 ## Rozważane alternatywy
 
 ### class-validator
-- Wymaga instancji klasy do walidacji, co nie pasuje do funkcyjnego stylu Next.js Route Handlers i React.
+- Opiera się na `reflect-metadata` i dekoratorach, co powoduje konkretne problemy techniczne w monorepo frontend/backend: psuje tree-shaking bundlera, znacząco zwiększa rozmiar bundle'a po stronie przeglądarki oraz nie działa w środowiskach V8 isolate, gdzie natywna refleksja metadanych jest niedostępna.
 
 ### Ręczna walidacja (if/throw)
 - Brak zależności.
@@ -27,6 +27,7 @@ Każdy endpoint API musi walidować dane wejściowe. Formularze na frontendzie p
 
 ## Uzasadnienie
 
+- Zod to lekka biblioteka bez zależności runtime-owych, kompilująca się do czystego JavaScript: w pełni kompatybilna z edge runtimes i bundlerami przeglądarkowymi bez eksperymentalnych flag kompilatora.
 - Zod wyprowadza typy TypeScript bezpośrednio ze schematu - jeden obiekt jest i schematem walidacji, i definicją typu.
 - Resolver sprawia, że błędy walidacji formularza są identyczne z błędami API.
 - Schemat to jedyne źródło prawdy dla kształtu żądania.

@@ -16,17 +16,16 @@ Wybór języka backendu determinuje cały ekosystem projektu. Każda interaktywn
 
 ### PHP (Laravel)
 - Bardzo popularny, dojrzały ekosystem, wbudowane migracje i auth.
-- PHP + JavaScript.
+- PHP + JavaScript - brak możliwości współdzielenia typów, większy nakład pracy na utrzymanie dwóch codebase, itd.
 
 ### Django (Python)
 - Wbudowany admin.
-- Python + JavaScript.
-- Dobry do przetwarzania danych, ale nie do bogatego interaktywnego UI.
+- Python + JavaScript - brak możliwości współdzielenia typów, większy nakład pracy na utrzymanie dwóch codebase, itd.
 
 ### Spring (Java)
 - Dojrzały, silnie typowany, dobry do bardzo dużych systemów.
 - Duży narzut konfiguracyjny (klasy, adnotacje, dependency injection) nieproporcjonalny do skali.
-- Java + JavaScript.
+- Java + JavaScript - brak możliwości współdzielenia typów, większy nakład pracy na utrzymanie dwóch codebase, itd.
 
 ---
 
@@ -39,5 +38,5 @@ Wybór języka backendu determinuje cały ekosystem projektu. Każda interaktywn
 ---
 
 ## Trade-offy
-- Node.js jest jednowątkowy, zadania obliczeniowe (PDF, transkodowanie) blokują pętlę zdarzeń i wymagają osobnego procesu.
+- Node.js posiada natywną wielowątkowość przez Worker Threads, jednak zadania obliczeniowe (PDF, transkodowanie) zostały przeniesione do osobnego procesu Docker ze względu na izolację infrastruktury i niezależne skalowanie.
 - TypeScript wymaga dodatkowej konfiguracji i dyscypliny - błędy typów itd.
