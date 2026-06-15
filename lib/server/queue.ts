@@ -35,18 +35,29 @@ const connection = {
   ...(redisUrl.password ? { password: redisUrl.password } : {}),
 }
 
+const defaultJobOptions = {
+  attempts: 3,
+  backoff: { type: 'exponential' as const, delay: 5000 },
+  removeOnComplete: { age: 1800, count: 100 },
+  removeOnFail: { age: 86400, count: 500 },
+}
+
 export const certificateQueue = new Queue<CertificateJobData>('certificate-generation', {
   connection,
+  defaultJobOptions,
 })
 
 export const videoQueue = new Queue<VideoJobData>('video-processing', {
   connection,
+  defaultJobOptions,
 })
 
 export const duplicationQueue = new Queue<DuplicationJobData>('course-duplication', {
   connection,
+  defaultJobOptions,
 })
 
 export const emailDigestQueue = new Queue<EmailDigestJobData>('email-digest', {
   connection,
+  defaultJobOptions,
 })

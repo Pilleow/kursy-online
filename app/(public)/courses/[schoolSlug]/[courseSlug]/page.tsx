@@ -14,11 +14,10 @@ export async function generateStaticParams() {
   try {
     const courses = await db.course.findMany({
       where: { status: 'published' },
-      select: { slug: true },
+      select: { slug: true, school: { select: { slug: true } } },
     })
-    return courses.map((c) => ({ slug: c.slug }))
+    return courses.map((c) => ({ schoolSlug: c.school.slug, courseSlug: c.slug }))
   } catch {
-    // DB not available at build time (e.g. docker build) — ISR generates pages at runtime
     return []
   }
 }
@@ -28,11 +27,11 @@ export async function generateStaticParams() {
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ slug: string }>
+  params: Promise<{ schoolSlug: string; courseSlug: string }>
 }): Promise<Metadata> {
-  const { slug } = await params
+  const { schoolSlug, courseSlug } = await params
   const course = await db.course.findFirst({
-    where: { slug, status: 'published' },
+    where: { slug: courseSlug, status: 'published', school: { slug: schoolSlug } },
     select: { title: true, description: true },
   })
   if (!course) return { title: 'Course not found' }
@@ -50,9 +49,9 @@ export async function generateMetadata({
 
 // ─── Data fetching ─────────────────────────────────────────────────────────────
 
-async function getCourseDetail(slug: string) {
+async function getCourseDetail(schoolSlug: string, courseSlug: string) {
   const course = await db.course.findFirst({
-    where: { slug, status: 'published' },
+    where: { slug: courseSlug, status: 'published', school: { slug: schoolSlug } },
     select: {
       id: true,
       title: true,
@@ -60,7 +59,7 @@ async function getCourseDetail(slug: string) {
       description: true,
       thumbnailUrl: true,
       priceUsd: true,
-      school: { select: { name: true } },
+      school: { select: { name: true, slug: true } },
       modules: {
         where: { status: 'published' },
         orderBy: { position: 'asc' },
@@ -99,10 +98,10 @@ async function getCourseDetail(slug: string) {
 export default async function CourseDetailPage({
   params,
 }: {
-  params: Promise<{ slug: string }>
+  params: Promise<{ schoolSlug: string; courseSlug: string }>
 }) {
-  const { slug } = await params
-  const course = await getCourseDetail(slug)
+  const { schoolSlug, courseSlug } = await params
+  const course = await getCourseDetail(schoolSlug, courseSlug)
 
   if (!course) notFound()
 
@@ -145,6 +144,7 @@ export default async function CourseDetailPage({
               <EnrollButton
                 courseId={course.id}
                 courseSlug={course.slug}
+                schoolSlug={course.school.slug}
                 isFree={isFree}
               />
 

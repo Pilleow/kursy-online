@@ -9,12 +9,13 @@ import { useAuthStore } from '@/lib/store/authStore'
 interface EnrollButtonProps {
   courseId: string
   courseSlug: string
+  schoolSlug: string
   isFree: boolean
 }
 
 type EnrollmentStatus = 'loading' | 'enrolled' | 'not-enrolled' | 'unauthenticated'
 
-export function EnrollButton({ courseId, courseSlug, isFree }: EnrollButtonProps) {
+export function EnrollButton({ courseId, courseSlug, schoolSlug, isFree }: EnrollButtonProps) {
   const router = useRouter()
   const { user, accessToken } = useAuthStore()
   const [status, setStatus] = useState<EnrollmentStatus>('loading')
@@ -64,7 +65,7 @@ export function EnrollButton({ courseId, courseSlug, isFree }: EnrollButtonProps
         body: JSON.stringify({ courseId }),
       })
       if (res.status === 401) {
-        router.push(`/login?next=/courses/${courseSlug}`)
+        router.push(`/login?next=/courses/${schoolSlug}/${courseSlug}`)
         return
       }
       if (!res.ok) {
@@ -89,7 +90,7 @@ export function EnrollButton({ courseId, courseSlug, isFree }: EnrollButtonProps
   if (status === 'unauthenticated') {
     return (
       <Button className="w-full" asChild>
-        <Link href={`/login?next=/courses/${courseSlug}`}>Sign in to Enroll</Link>
+        <Link href={`/login?next=/courses/${schoolSlug}/${courseSlug}`}>Sign in to Enroll</Link>
       </Button>
     )
   }

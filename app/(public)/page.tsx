@@ -19,7 +19,7 @@ async function getPublishedCourses(): Promise<PublicCourse[]> {
       description: true,
       thumbnailUrl: true,
       priceUsd: true,
-      school: { select: { name: true } },
+      school: { select: { name: true, slug: true } },
       modules: {
         take: 1,
         select: {
@@ -44,6 +44,7 @@ async function getPublishedCourses(): Promise<PublicCourse[]> {
       id: c.id,
       title: c.title,
       slug: c.slug,
+      schoolSlug: c.school.slug,
       description: c.description,
       thumbnailUrl: c.thumbnailUrl,
       priceUsd: c.priceUsd !== null ? Number(c.priceUsd) : null,

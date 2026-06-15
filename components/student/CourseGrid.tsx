@@ -9,6 +9,7 @@ export type PublicCourse = {
   id: string
   title: string
   slug: string
+  schoolSlug: string
   description: string | null
   thumbnailUrl: string | null
   priceUsd: number | null

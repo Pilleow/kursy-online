@@ -29,7 +29,7 @@ export function CourseCard({ course }: CourseCardProps) {
 
   return (
     <Link
-      href={`/courses/${course.slug}`}
+      href={`/courses/${course.schoolSlug}/${course.slug}`}
       className="group flex flex-col rounded-xl border border-border bg-card overflow-hidden hover:shadow-md transition-shadow"
     >
       <div className="relative h-44 flex-shrink-0 overflow-hidden">
